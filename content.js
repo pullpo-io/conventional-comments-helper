@@ -1,4 +1,4 @@
-console.log("Conventional Comments Helper v0.3.0 activated");
+console.log("Conventional Comments Helper v0.4.0 activated");
 
 const CONVENTIONAL_COMMENT_LABELS = [
     { label: 'praise', desc: 'Highlight something positive.' },
@@ -7,7 +7,8 @@ const CONVENTIONAL_COMMENT_LABELS = [
     { label: 'issue', desc: 'Point out a blocking problem.' },
     { label: 'question', desc: 'Ask for clarification.' },
     { label: 'thought', desc: 'Share a reflection or idea.' },
-    { label: 'chore', desc: 'Request a minor, non-code task.' }
+    { label: 'chore', desc: 'Request a minor, non-code task.' },
+    { label: 'if-minor', desc: 'Address if the effort is small.' }
 ];
 
 const DECORATIONS = [
@@ -16,61 +17,102 @@ const DECORATIONS = [
     { label: 'if-minor', desc: 'Address if the effort is small.' }
 ];
 
-// Regex to match existing conventional comment prefix (type + optional decoration)
-// Group 1: Type (e.g., "suggestion")
-// Group 2: Full decoration including parens (e.g., "(blocking)")
-// Group 3: Decoration text only (e.g., "blocking")
-const EXISTING_PREFIX_DECO_REGEX = /^(\w+)(\((non-blocking|blocking|if-minor)\))?:\s*/;
+// Helper function for badge colors (can be expanded)
+function getBadgeColor(type) {
+    switch (type) {
+        case 'praise': return 'brightgreen';
+        case 'nitpick': return 'yellow';
+        case 'suggestion': return 'blue';
+        case 'issue': return 'red';
+        case 'question': return 'purple';
+        case 'thought': return 'lightgrey';
+        case 'chore': return 'orange';
+        default: return 'lightgrey';
+    }
+}
+
+// Helper function to create badge markdown
+function createBadgeMarkdown(type, decoration) {
+    const color = getBadgeColor(type);
+    let label = type;
+    let message = decoration || ''; // Use decoration as message if present
+    let badgeUrl;
+
+    // Simple URL encoding for badge parts
+    const encode = (str) => encodeURIComponent(str.replace(/-/g, '--').replace(/_/g, '__')); // Shields.io escaping
+
+    if (message) {
+        // Format: https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
+        badgeUrl = `https://img.shields.io/badge/${encode(label)}-${encode(message)}-${color}`;
+    } else {
+        // Format: https://img.shields.io/badge/<LABEL>-<COLOR> (No message part)
+        badgeUrl = `https://img.shields.io/badge/${encode(label)}-${color}`;
+    }
+
+    // Alt text for the image
+    const altText = decoration ? `${type} (${decoration})` : type;
+
+    return `![${altText}](${badgeUrl}) `; // Markdown image syntax with a trailing space
+}
 
 const TOOLBAR_ID_PREFIX = 'conventional-comments-toolbar-'; // Use prefix for uniqueness
 const TOOLBAR_MARKER_CLASS = 'cc-toolbar-added';
+const SETTINGS_MARKER_CLASS = 'cc-settings-injected'; // Marker for GitHub toolbars we've added settings to
+const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-'; // Prefix for settings button IDs
+const SETTINGS_DROPDOWN_ID_PREFIX = 'cc-settings-dropdown-'; // Prefix for settings dropdown IDs
 let toolbarCounter = 0; // Ensure unique IDs if multiple textareas load simultaneously
-
-// --- Settings Constants ---
-const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-';
-const SETTINGS_DROPDOWN_ID_PREFIX = 'cc-settings-dropdown-';
-const SETTINGS_MARKER_CLASS = 'cc-settings-injected';
-const PRETTIFY_STORAGE_KEY = 'conventionalCommentsHelper_prettifyEnabled';
 let settingsCounter = 0; // Unique IDs for settings elements
+
+// --- Global Selector for Textareas ---
+const COMMENT_TEXTAREA_SELECTOR = 'textarea[aria-label*="comment"], textarea[name="comment[body]"], textarea[name="pull_request_review[body]"], textarea#new_commit_comment_field';
 
 // --- LocalStorage Helpers ---
 function getPrettifyState() {
     // Defaults to true if not set
-    const storedValue = localStorage.getItem(PRETTIFY_STORAGE_KEY);
+    const storedValue = localStorage.getItem('conventionalCommentsHelper_prettifyEnabled');
     return storedValue === null ? true : storedValue === 'true';
 }
 
 function setPrettifyState(enabled) {
-    localStorage.setItem(PRETTIFY_STORAGE_KEY, enabled);
+    localStorage.setItem('conventionalCommentsHelper_prettifyEnabled', enabled);
     console.log('Prettify state saved:', enabled);
 }
 
-// --- Core Function: Update Comment Prefix ---
+// --- Core Function: Update Comment Prefix (Handles Text or Badge) ---
 function updateCommentPrefix(textarea, newType, newDecoration) {
-    // Only run if prettify is enabled
-    if (!getPrettifyState()) {
-        console.log('Prettify disabled, skipping prefix update.');
-        // Maybe clear existing prefix if user manually typed one and disabled?
-        // For now, just do nothing.
-        return;
-    }
-
     const currentValue = textarea.value;
     const selectionStart = textarea.selectionStart;
 
     // Find the start index of the line the cursor is currently on
     let lineStartIndex = currentValue.lastIndexOf('\n', selectionStart - 1) + 1;
 
-    // Build the new prefix string
-    let newPrefixString = newType;
-    if (newDecoration) {
-        newPrefixString += `(${newDecoration})`;
+    // Build the new prefix string based on Prettify state
+    let newPrefixString;
+    if (getPrettifyState()) {
+        // Prettify ON: Use badge markdown
+        newPrefixString = createBadgeMarkdown(newType, newDecoration);
+        console.log("Prettify ON - Using badge:", newPrefixString);
+    } else {
+        // Prettify OFF: Use plain text
+        newPrefixString = newType;
+        if (newDecoration) {
+            newPrefixString += `(${newDecoration})`;
+        }
+        newPrefixString += ': ';
+        console.log("Prettify OFF - Using text:", newPrefixString);
     }
-    newPrefixString += ': ';
+
+    // Regex to match existing conventional comment prefix (type + optional decoration OR badge)
+    // Group 1: Plain text type OR Badge alt text type part
+    // Group 3: Plain text decoration OR Badge alt text decoration part
+    // Group 5: Full badge markdown ![...](...)
+    const EXISTING_PREFIX_REGEX = /^(?:(\w+)(?:\((non-blocking|blocking|if-minor)\))?:\s*|(\!\[\((\w+)(?:\s*\((non-blocking|blocking|if-minor)\))?)?\]\(https?:\/\/img\.shields\.io\/badge\/.*?\)\s*)/;
+
+    // Note: \u005B is [ and \u005D is ], escaped for regex safety.
 
     // Check if the current line already starts with a known prefix
     const currentLineContent = currentValue.substring(lineStartIndex); // Get text from line start onwards
-    const match = currentLineContent.match(EXISTING_PREFIX_DECO_REGEX);
+    const match = currentLineContent.match(EXISTING_PREFIX_REGEX);
 
     let newValue;
     let newCursorPos;
@@ -79,17 +121,14 @@ function updateCommentPrefix(textarea, newType, newDecoration) {
         // Existing prefix found, replace it
         const existingPrefix = match[0];
         const subject = currentLineContent.substring(existingPrefix.length);
-        const lineEndIndex = currentValue.indexOf('\n', lineStartIndex); // Find end of the current line
-        const endOfValue = (lineEndIndex === -1) ? currentValue.length : lineEndIndex;
-
-        newValue = currentValue.substring(0, lineStartIndex) + newPrefixString + subject + currentValue.substring(endOfValue);
+        newValue = currentValue.substring(0, lineStartIndex) + newPrefixString + subject;
         newCursorPos = lineStartIndex + newPrefixString.length;
-        // console.log(`Replaced prefix: ${existingPrefix.trim()} -> ${newPrefixString.trim()}`);
+        console.log(`Replaced prefix: "${existingPrefix.trim()}" -> "${newPrefixString.trim()}"`);
     } else {
         // No existing prefix, insert the new one
         newValue = currentValue.substring(0, lineStartIndex) + newPrefixString + currentValue.substring(lineStartIndex);
         newCursorPos = lineStartIndex + newPrefixString.length;
-        // console.log(`Inserted prefix: ${newPrefixString.trim()}`);
+        console.log(`Inserted prefix: "${newPrefixString.trim()}"`);
     }
 
     // Update the textarea value
@@ -203,6 +242,7 @@ function renderToolbar(toolbar, textarea) {
 
     // --- State 1: Initial or Change Type ---
     if (state === 'initial' || state === 'changeType') {
+        console.log(`renderToolbar (${toolbar.id}): state is '${state}', adding type buttons.`);
         CONVENTIONAL_COMMENT_LABELS.forEach(item => {
             const button = document.createElement('button');
             button.textContent = item.label;
@@ -289,29 +329,40 @@ function renderToolbar(toolbar, textarea) {
 
 // --- Function to Initialize Toolbar for a Textarea ---
 function initializeToolbarForTextarea(textarea) {
-    if (textarea.classList.contains(TOOLBAR_MARKER_CLASS) || !getPrettifyState()) {
-        // Don't add conventional comments toolbar if already added OR if prettify is off
-        if (!textarea.classList.contains(TOOLBAR_MARKER_CLASS) && !getPrettifyState()){
-             // Ensure marker is added even if toolbar isn't, to prevent re-processing
-             textarea.classList.add(TOOLBAR_MARKER_CLASS);
-        }
+    const textareaId = textarea.id || textarea.name || `cc-textarea-${Math.random().toString(36).substring(2, 9)}`; // Ensure some ID
+    if (!textarea.id) textarea.id = textareaId; // Assign ID if it doesn't have one
+
+    // Use marker class on textarea to prevent re-initialization (like original version)
+    if (textarea.classList.contains(TOOLBAR_MARKER_CLASS)) {
+        // console.log(`initializeToolbarForTextarea: Textarea ${textarea.id} already marked.`);
+        // Ensure it's visible if somehow hidden (shouldn't happen with new logic)
+        const existingToolbar = textarea.parentNode?.querySelector(`.cc-toolbar[data-textarea-id="${textarea.id}"]`);
+        if (existingToolbar) existingToolbar.style.display = 'flex';
         return;
     }
 
+    console.log(`Initializing Conventional Comments Toolbar for: ${textarea.id}`);
+
     const toolbar = document.createElement('div');
-    // Assign unique ID in case we need to target it later
+    // Assign unique ID AND a way to link it back to the textarea
     toolbar.id = `${TOOLBAR_ID_PREFIX}${toolbarCounter++}`;
+    toolbar.dataset.textareaId = textarea.id; // Link to textarea using its ID
     toolbar.classList.add('cc-toolbar');
     // Initialize state
     toolbar.dataset.state = 'initial'; // Start in initial state
     toolbar.dataset.selectedType = '';
     toolbar.dataset.selectedDecoration = '';
 
+    // Set initial visibility - ALWAYS VISIBLE NOW
+    toolbar.style.display = 'flex';
+
     // Initial rendering
+    console.log(` -> Calling renderToolbar for ${toolbar.id} (textarea: ${textarea.id})`);
     renderToolbar(toolbar, textarea);
 
     // Insert toolbar *before* the textarea
-    textarea.parentNode.insertBefore(toolbar, textarea);
+    textarea.parentNode?.insertBefore(toolbar, textarea); // Safer insertion
+
     textarea.classList.add(TOOLBAR_MARKER_CLASS); // Mark textarea
 }
 
@@ -330,10 +381,10 @@ function injectSettingsButton(textarea) {
             githubToolbar = parentWrapper.previousElementSibling;
         }
     }
-     // Fallback 2: Look for toolbar inside a common ancestor like .timeline-comment-header
+    // Fallback 2: Look for toolbar inside a common ancestor like .timeline-comment-header
     if (!githubToolbar) {
         const header = textarea.closest('.js-comment-container, .timeline-comment') ?.querySelector('.timeline-comment-header .ActionBar');
-         if (header) {
+        if (header) {
             githubToolbar = header;
         }
     }
@@ -343,12 +394,12 @@ function injectSettingsButton(textarea) {
 
         // Find the controls container within the toolbar (again, selector might need updates)
         let controlsContainer = githubToolbar.querySelector('.ActionBar-item-container'); // Common in newer UIs
-         if (!controlsContainer) {
-             controlsContainer = githubToolbar.querySelector('.md-header-controls'); // Older pattern
-         }
-         if (!controlsContainer) {
-             controlsContainer = githubToolbar; // Default to toolbar itself if no specific container found
-         }
+        if (!controlsContainer) {
+            controlsContainer = githubToolbar.querySelector('.md-header-controls'); // Older pattern
+        }
+        if (!controlsContainer) {
+            controlsContainer = githubToolbar; // Default to toolbar itself if no specific container found
+        }
 
         const { button, dropdown } = createSettingsButton(textarea);
 
@@ -361,48 +412,34 @@ function injectSettingsButton(textarea) {
         controlsContainer.appendChild(buttonWrapper); // Append the wrapped button
         githubToolbar.classList.add(SETTINGS_MARKER_CLASS); // Mark toolbar as processed
 
-        // Initial check: Don't add CC toolbar if prettify is off
-        if (!getPrettifyState()) {
-           const ccToolbar = textarea.parentNode.querySelector('.cc-toolbar');
-           if (ccToolbar) ccToolbar.style.display = 'none';
-        }
-
-        // Add listener to the toggle to potentially hide/show the CC toolbar
+        // Add listener to the toggle - NOW ONLY SAVES STATE, DOES NOT HIDE/SHOW TOOLBAR
         const toggle = dropdown.querySelector('.cc-settings-toggle');
+        const textareaId = textarea.id; // Capture textarea ID for the listener
         toggle.addEventListener('change', (event) => {
-            const conventionalToolbar = textarea.parentNode.querySelector('.cc-toolbar');
-            if (conventionalToolbar) {
-                 if(event.target.checked) {
-                     // If turning on, initialize if needed, or just show
-                     if (!textarea.classList.contains(TOOLBAR_MARKER_CLASS)) {
-                         initializeToolbarForTextarea(textarea);
-                     } else {
-                         conventionalToolbar.style.display = 'flex'; // Or default display
-                     }
-                 } else {
-                     conventionalToolbar.style.display = 'none'; // Hide if turning off
-                 }
-            }
+            setPrettifyState(event.target.checked); // Save state to localStorage
+            console.log(`Toggle changed for ${textareaId}. Prettify Enabled: ${event.target.checked}`);
+            // NO LONGER MANIPULATES TOOLBAR DISPLAY HERE
         });
-
     } else if (!githubToolbar) {
         // console.log("Could not find GitHub toolbar for textarea:", textarea);
     }
 }
 
-
 // --- Main Execution & Mutation Observer ---
 
 // Find all comment textareas and process them
 function processCommentAreas() {
-    // More specific selector to target GitHub comment textareas
-    document.querySelectorAll(
-        'textarea[aria-label*="comment"], textarea[name="comment[body]"], textarea[name="pull_request_review[body]"], textarea#new_commit_comment_field'
-    ).forEach(textarea => {
-        // Initialize the conventional comments toolbar (respects prettify state)
-        initializeToolbarForTextarea(textarea);
+    document.querySelectorAll(COMMENT_TEXTAREA_SELECTOR).forEach(textarea => {
+        // Ensure textarea has an ID for reliable association
+        if (!textarea.id) {
+            textarea.id = textarea.name || `cc-textarea-${Math.random().toString(36).substring(2, 9)}`;
+        }
         // Inject the settings button next to GitHub's toolbar
+        // This happens first so the toggle listener is ready
         injectSettingsButton(textarea);
+
+        // Initialize the toolbar (function itself checks marker class and prettify state for visibility)
+        initializeToolbarForTextarea(textarea);
     });
 }
 
@@ -415,13 +452,13 @@ const observer = new MutationObserver((mutationsList) => {
             mutation.addedNodes.forEach(node => {
                 // Check if the added node is a textarea or contains one
                 if (node.nodeType === 1) { // Check if it's an element
-                    if (node.matches('textarea[aria-label*="comment"], textarea[name="comment[body]"], textarea[name="pull_request_review[body]"], textarea#new_commit_comment_field') || node.querySelector('textarea[aria-label*="comment"]')) {
+                    if (node.matches(COMMENT_TEXTAREA_SELECTOR) || node.querySelector(COMMENT_TEXTAREA_SELECTOR)) {
                         needsProcessing = true;
                     }
-                     // Also check if a relevant toolbar was added dynamically
-                     if (node.matches('markdown-toolbar, .ActionBar, .md-header') || node.querySelector('markdown-toolbar, .ActionBar, .md-header')) {
-                         needsProcessing = true;
-                     }
+                    // Also check if a relevant toolbar was added dynamically
+                    if (node.matches('markdown-toolbar, .ActionBar, .md-header') || node.querySelector('markdown-toolbar, .ActionBar, .md-header')) {
+                        needsProcessing = true;
+                    }
                 }
             });
         }
