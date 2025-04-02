@@ -26,8 +26,35 @@ const TOOLBAR_ID_PREFIX = 'conventional-comments-toolbar-'; // Use prefix for un
 const TOOLBAR_MARKER_CLASS = 'cc-toolbar-added';
 let toolbarCounter = 0; // Ensure unique IDs if multiple textareas load simultaneously
 
+// --- Settings Constants ---
+const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-';
+const SETTINGS_DROPDOWN_ID_PREFIX = 'cc-settings-dropdown-';
+const SETTINGS_MARKER_CLASS = 'cc-settings-injected';
+const PRETTIFY_STORAGE_KEY = 'conventionalCommentsHelper_prettifyEnabled';
+let settingsCounter = 0; // Unique IDs for settings elements
+
+// --- LocalStorage Helpers ---
+function getPrettifyState() {
+    // Defaults to true if not set
+    const storedValue = localStorage.getItem(PRETTIFY_STORAGE_KEY);
+    return storedValue === null ? true : storedValue === 'true';
+}
+
+function setPrettifyState(enabled) {
+    localStorage.setItem(PRETTIFY_STORAGE_KEY, enabled);
+    console.log('Prettify state saved:', enabled);
+}
+
 // --- Core Function: Update Comment Prefix ---
 function updateCommentPrefix(textarea, newType, newDecoration) {
+    // Only run if prettify is enabled
+    if (!getPrettifyState()) {
+        console.log('Prettify disabled, skipping prefix update.');
+        // Maybe clear existing prefix if user manually typed one and disabled?
+        // For now, just do nothing.
+        return;
+    }
+
     const currentValue = textarea.value;
     const selectionStart = textarea.selectionStart;
 
@@ -79,6 +106,91 @@ function updateCommentPrefix(textarea, newType, newDecoration) {
     textarea.focus();
 }
 
+// --- Settings UI --- //
+
+// Function to create the settings dropdown HTML
+function createSettingsDropdown(id, initialState) {
+    const dropdown = document.createElement('div');
+    dropdown.id = id;
+    dropdown.classList.add('cc-settings-dropdown');
+    // Start hidden, CSS will handle transition
+    dropdown.style.visibility = 'hidden';
+    dropdown.style.opacity = '0';
+
+    const label = document.createElement('label');
+    label.classList.add('cc-settings-toggle-label');
+    label.textContent = 'Prettify: ';
+
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.checked = initialState;
+    toggle.classList.add('cc-settings-toggle');
+
+    toggle.addEventListener('change', (event) => {
+        setPrettifyState(event.target.checked);
+        // Optional: Add visual feedback or trigger other actions if needed
+    });
+
+    label.appendChild(toggle);
+    // Simple visual indicator for the switch (can be enhanced with CSS)
+    const switchSpan = document.createElement('span');
+    switchSpan.classList.add('cc-settings-toggle-switch');
+    label.appendChild(switchSpan);
+
+    dropdown.appendChild(label);
+    return dropdown;
+}
+
+// Function to create the settings button
+function createSettingsButton(textarea, toolbarId) {
+    const button = document.createElement('button');
+    button.id = `${SETTINGS_BUTTON_ID_PREFIX}${settingsCounter}`;
+    button.type = 'button';
+    button.classList.add('cc-settings-button', 'tooltipped', 'tooltipped-n'); // Use GitHub tooltip classes
+    button.setAttribute('aria-label', 'Conventional Comments Settings');
+    button.innerHTML = `
+        <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-gear">
+            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm6.5-5.25a.75.75 0 0 1 .75.75v1.25a.75.75 0 0 1-1.5 0V3.5a.75.75 0 0 1 .75-.75ZM8 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM5 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm6.5 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm-5.01-.031a3 3 0 1 1 5.05 2.471 3.51 3.51 0 0 0-5.051-2.47Z"></path>
+        </svg>`; // Simple gear icon placeholder
+
+    const dropdownId = `${SETTINGS_DROPDOWN_ID_PREFIX}${settingsCounter}`;
+    const prettifyEnabled = getPrettifyState();
+    const dropdown = createSettingsDropdown(dropdownId, prettifyEnabled);
+
+    // Append dropdown to the body initially to handle potential overflow issues
+    // It will be positioned relative to the button via CSS
+    document.body.appendChild(dropdown);
+
+    button.addEventListener('click', (event) => {
+        event.stopPropagation(); // Prevent triggering outside click listener immediately
+        const currentlyActive = dropdown.classList.contains('active');
+        closeAllSettingsDropdowns(); // Close others
+        if (!currentlyActive) {
+            // Position and show
+            const btnRect = button.getBoundingClientRect();
+            dropdown.style.top = `${window.scrollY + btnRect.bottom + 5}px`; // Position below button
+            dropdown.style.left = `${window.scrollX + btnRect.left}px`; // Align left
+            dropdown.style.visibility = 'visible';
+            dropdown.style.opacity = '1';
+            dropdown.classList.add('active');
+        }
+    });
+
+    settingsCounter++;
+    return { button, dropdown }; // Return both for management
+}
+
+// Function to close all open settings dropdowns
+function closeAllSettingsDropdowns() {
+    document.querySelectorAll('.cc-settings-dropdown.active').forEach(dd => {
+        dd.style.visibility = 'hidden';
+        dd.style.opacity = '0';
+        dd.classList.remove('active');
+    });
+}
+
+// Add listener to close dropdowns when clicking outside
+document.addEventListener('click', closeAllSettingsDropdowns);
 
 // --- Core Function: Render Toolbar UI based on State ---
 function renderToolbar(toolbar, textarea) {
@@ -177,8 +289,13 @@ function renderToolbar(toolbar, textarea) {
 
 // --- Function to Initialize Toolbar for a Textarea ---
 function initializeToolbarForTextarea(textarea) {
-    if (textarea.classList.contains(TOOLBAR_MARKER_CLASS)) {
-        return; // Already initialized
+    if (textarea.classList.contains(TOOLBAR_MARKER_CLASS) || !getPrettifyState()) {
+        // Don't add conventional comments toolbar if already added OR if prettify is off
+        if (!textarea.classList.contains(TOOLBAR_MARKER_CLASS) && !getPrettifyState()){
+             // Ensure marker is added even if toolbar isn't, to prevent re-processing
+             textarea.classList.add(TOOLBAR_MARKER_CLASS);
+        }
+        return;
     }
 
     const toolbar = document.createElement('div');
@@ -198,39 +315,120 @@ function initializeToolbarForTextarea(textarea) {
     textarea.classList.add(TOOLBAR_MARKER_CLASS); // Mark textarea
 }
 
+// --- Function to Inject Settings Button --- //
+function injectSettingsButton(textarea) {
+    // Find the associated GitHub Markdown toolbar
+    // This selector might need adjustment based on GitHub's current structure.
+    // Common patterns: `textarea.previousElementSibling`, specific classes like `.md-header`, traversing up to a common parent.
+    // Let's try finding a toolbar related to the textarea's ID or name, or a nearby toolbar element.
+    let githubToolbar = textarea.closest('form')?.querySelector('markdown-toolbar, .ActionBar'); // Look within the form for toolbar elements
 
-// --- Find Textareas and Initialize Toolbars ---
-function processCommentAreas() {
-    const textareas = document.querySelectorAll(
-        'textarea[name="comment[body]"], textarea[aria-label*="Comment body"], textarea.js-comment-field, textarea[name="pull_request_review[body]"]'
-    );
-    textareas.forEach(textarea => {
-        if (textarea.offsetParent !== null && !textarea.readOnly && !textarea.classList.contains(TOOLBAR_MARKER_CLASS)) {
-            initializeToolbarForTextarea(textarea);
+    // Fallback: Look for toolbar immediately preceding the textarea's container (common in PR reviews)
+    if (!githubToolbar) {
+        const parentWrapper = textarea.closest('.comment-form-textarea-wrapper'); // Adjust selector if needed
+        if (parentWrapper && parentWrapper.previousElementSibling?.matches('markdown-toolbar, .ActionBar')) {
+            githubToolbar = parentWrapper.previousElementSibling;
         }
+    }
+     // Fallback 2: Look for toolbar inside a common ancestor like .timeline-comment-header
+    if (!githubToolbar) {
+        const header = textarea.closest('.js-comment-container, .timeline-comment') ?.querySelector('.timeline-comment-header .ActionBar');
+         if (header) {
+            githubToolbar = header;
+        }
+    }
+
+    if (githubToolbar && !githubToolbar.classList.contains(SETTINGS_MARKER_CLASS)) {
+        console.log("GitHub Toolbar found, injecting settings button:", githubToolbar);
+
+        // Find the controls container within the toolbar (again, selector might need updates)
+        let controlsContainer = githubToolbar.querySelector('.ActionBar-item-container'); // Common in newer UIs
+         if (!controlsContainer) {
+             controlsContainer = githubToolbar.querySelector('.md-header-controls'); // Older pattern
+         }
+         if (!controlsContainer) {
+             controlsContainer = githubToolbar; // Default to toolbar itself if no specific container found
+         }
+
+        const { button, dropdown } = createSettingsButton(textarea);
+
+        // Wrap button in a container if needed for styling/layout within GitHub's toolbar
+        const buttonWrapper = document.createElement('div');
+        // Try to mimic GitHub's own button wrappers if possible
+        buttonWrapper.classList.add('ActionBar-item', 'cc-settings-item');
+        buttonWrapper.appendChild(button);
+
+        controlsContainer.appendChild(buttonWrapper); // Append the wrapped button
+        githubToolbar.classList.add(SETTINGS_MARKER_CLASS); // Mark toolbar as processed
+
+        // Initial check: Don't add CC toolbar if prettify is off
+        if (!getPrettifyState()) {
+           const ccToolbar = textarea.parentNode.querySelector('.cc-toolbar');
+           if (ccToolbar) ccToolbar.style.display = 'none';
+        }
+
+        // Add listener to the toggle to potentially hide/show the CC toolbar
+        const toggle = dropdown.querySelector('.cc-settings-toggle');
+        toggle.addEventListener('change', (event) => {
+            const conventionalToolbar = textarea.parentNode.querySelector('.cc-toolbar');
+            if (conventionalToolbar) {
+                 if(event.target.checked) {
+                     // If turning on, initialize if needed, or just show
+                     if (!textarea.classList.contains(TOOLBAR_MARKER_CLASS)) {
+                         initializeToolbarForTextarea(textarea);
+                     } else {
+                         conventionalToolbar.style.display = 'flex'; // Or default display
+                     }
+                 } else {
+                     conventionalToolbar.style.display = 'none'; // Hide if turning off
+                 }
+            }
+        });
+
+    } else if (!githubToolbar) {
+        // console.log("Could not find GitHub toolbar for textarea:", textarea);
+    }
+}
+
+
+// --- Main Execution & Mutation Observer ---
+
+// Find all comment textareas and process them
+function processCommentAreas() {
+    // More specific selector to target GitHub comment textareas
+    document.querySelectorAll(
+        'textarea[aria-label*="comment"], textarea[name="comment[body]"], textarea[name="pull_request_review[body]"], textarea#new_commit_comment_field'
+    ).forEach(textarea => {
+        // Initialize the conventional comments toolbar (respects prettify state)
+        initializeToolbarForTextarea(textarea);
+        // Inject the settings button next to GitHub's toolbar
+        injectSettingsButton(textarea);
     });
 }
 
-// --- Main Execution & Mutation Observer ---
 processCommentAreas(); // Initial run
 
 const observer = new MutationObserver((mutationsList) => {
+    let needsProcessing = false;
     for (const mutation of mutationsList) {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        if (mutation.type === 'childList') {
             mutation.addedNodes.forEach(node => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    const selector = 'textarea[name="comment[body]"], textarea[aria-label*="Comment body"], textarea.js-comment-field, textarea[name="pull_request_review[body]"]';
-                    if (node.matches(selector)) {
-                         if (!node.classList.contains(TOOLBAR_MARKER_CLASS)) initializeToolbarForTextarea(node);
-                    } else {
-                        node.querySelectorAll(selector).forEach(textarea => {
-                            if (!textarea.classList.contains(TOOLBAR_MARKER_CLASS)) initializeToolbarForTextarea(textarea);
-                        });
+                // Check if the added node is a textarea or contains one
+                if (node.nodeType === 1) { // Check if it's an element
+                    if (node.matches('textarea[aria-label*="comment"], textarea[name="comment[body]"], textarea[name="pull_request_review[body]"], textarea#new_commit_comment_field') || node.querySelector('textarea[aria-label*="comment"]')) {
+                        needsProcessing = true;
                     }
+                     // Also check if a relevant toolbar was added dynamically
+                     if (node.matches('markdown-toolbar, .ActionBar, .md-header') || node.querySelector('markdown-toolbar, .ActionBar, .md-header')) {
+                         needsProcessing = true;
+                     }
                 }
             });
         }
     }
+    if (needsProcessing) {
+        // console.log("Mutation detected, reprocessing comment areas...");
+        processCommentAreas();
+    }
 });
-
 observer.observe(document.body, { childList: true, subtree: true });

@@ -68,6 +68,25 @@
   
   /* --- Dark Mode Styles --- (Keep previous dark mode styles for .cc-button) */
   
+  /* Explicit dark mode styles for the base button */
+  html[data-color-mode="dark"] .cc-button {
+    background-color: var(--color-btn-bg, #21262d); /* Darker button background */
+    border-color: var(--color-btn-border, rgba(240, 246, 252, 0.1)); /* Lighter border for contrast */
+    color: var(--color-btn-text, #c9d1d9); /* Lighter text */
+  }
+
+  /* Dark mode hover/active styles might also need adjustment if default isn't good */
+  /* Example (Uncomment and adjust if needed):
+  html[data-color-mode="dark"] .cc-button:hover {
+    background-color: var(--color-btn-hover-bg, #30363d);
+    border-color: var(--color-btn-hover-border, rgba(240, 246, 252, 0.15));
+  }
+  html[data-color-mode="dark"] .cc-button:active {
+    background-color: var(--color-btn-active-bg, #21262d); // Adjust as needed
+    border-color: var(--color-btn-active-border, rgba(240, 246, 252, 0.1)); // Adjust as needed
+  }
+  */
+
   /* Add dark mode styles for new elements */
   html[data-color-mode="dark"] .cc-selected-type-label {
       color: var(--color-fg-default, #c9d1d9);
@@ -96,3 +115,156 @@
       border-color: var(--color-border-default, #f0f6fc);
   }
   /* ... potentially more high contrast overrides ... */
+
+/* --- Settings Button & Dropdown Styles --- */
+
+/* Container for the settings button (mimics GitHub's ActionBar item) */
+.cc-settings-item {
+    /* Inherits display: flex from parent .ActionBar-item-container usually */
+    /* Add specific alignment if needed */
+    align-items: center;
+}
+
+.cc-settings-button {
+    /* Align with GitHub's toolbar button styles */
+    background: none;
+    border: none;
+    padding: 4px; /* Adjust as needed */
+    margin-left: 4px; /* Space from other items */
+    cursor: pointer;
+    color: var(--color-fg-muted, #57606a); /* Use muted color */
+    border-radius: 6px;
+    line-height: 0; /* Prevent extra space */
+    transition: background-color 0.1s ease-out, color 0.1s ease-out;
+}
+
+.cc-settings-button svg {
+    display: block; /* Prevent inline spacing issues */
+    fill: currentColor;
+}
+
+.cc-settings-button:hover {
+    background-color: var(--color-action-list-item-default-hover-bg, rgba(175, 184, 193, 0.2)); /* Subtle hover */
+    color: var(--color-fg-default, #24292f);
+}
+
+.cc-settings-button:active {
+     background-color: var(--color-action-list-item-default-active-bg, rgba(175, 184, 193, 0.3));
+}
+
+.cc-settings-dropdown {
+    position: absolute; /* Positioned by JS */
+    z-index: 100; /* Ensure it's above other elements */
+    background-color: var(--color-canvas-overlay, #ffffff);
+    border: 1px solid var(--color-border-default, #d0d7de);
+    border-radius: 6px;
+    padding: 8px 12px;
+    box-shadow: var(--color-shadow-medium, 0 3px 6px rgba(140,149,159,0.15));
+    font-size: 12px;
+    color: var(--color-fg-default, #24292f);
+    min-width: 150px;
+    /* Transition for fade-in/out */
+    transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out;
+    /* Initially hidden */
+    visibility: hidden;
+    opacity: 0;
+}
+
+.cc-settings-dropdown.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.cc-settings-toggle-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+}
+
+.cc-settings-toggle {
+    margin-left: 5px;
+    margin-right: 8px; /* Space between checkbox and visual switch */
+    cursor: pointer;
+    /* Basic styling, can hide and use custom switch */
+    appearance: none; /* Hide default checkbox */
+    width: 36px; /* Size of the switch track */
+    height: 20px;
+    background-color: var(--color-neutral-muted, #d0d7de);
+    border-radius: 10px;
+    position: relative;
+    transition: background-color 0.2s ease;
+    outline: none;
+}
+
+/* The circle/knob of the switch */
+.cc-settings-toggle::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: var(--color-fg-on-emphasis, #ffffff);
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.cc-settings-toggle:checked {
+    background-color: var(--color-success-fg, #1f883d);
+}
+
+.cc-settings-toggle:checked::before {
+    transform: translateX(16px); /* Move knob to the right */
+}
+
+/* Hide the temporary span if we use the checkbox styling */
+.cc-settings-toggle-switch {
+    display: none;
+}
+
+
+/* --- Dark Mode Settings Styles --- */
+
+html[data-color-mode="dark"] .cc-settings-button {
+    color: var(--color-fg-muted, #8b949e);
+}
+
+html[data-color-mode="dark"] .cc-settings-button:hover {
+    background-color: var(--color-action-list-item-default-hover-bg, rgba(187, 196, 206, 0.1));
+    color: var(--color-fg-default, #c9d1d9);
+}
+
+html[data-color-mode="dark"] .cc-settings-button:active {
+     background-color: var(--color-action-list-item-default-active-bg, rgba(187, 196, 206, 0.15));
+}
+
+html[data-color-mode="dark"] .cc-settings-dropdown {
+    background-color: var(--color-canvas-overlay, #161b22);
+    border-color: var(--color-border-default, #30363d);
+    box-shadow: var(--color-shadow-large, 0 8px 24px rgba(1,4,9,0.8));
+    color: var(--color-fg-default, #c9d1d9);
+}
+
+html[data-color-mode="dark"] .cc-settings-toggle {
+    background-color: var(--color-neutral-muted, #30363d);
+}
+
+html[data-color-mode="dark"] .cc-settings-toggle:checked {
+    background-color: var(--color-success-fg, #3fb950);
+}
+
+html[data-color-mode="dark"] .cc-settings-toggle::before {
+    background-color: var(--color-fg-on-emphasis, #0d1117);
+}
+
+/* Optional: High contrast dark mode for settings */
+html[data-color-mode="dark"][data-dark-theme="dark_high_contrast"] .cc-settings-dropdown {
+     background-color: var(--color-canvas-default, #010409);
+     border-color: var(--color-border-default, #8b949e);
+}
+
+html[data-color-mode="dark"][data-dark-theme="dark_high_contrast"] .cc-settings-toggle {
+     border: 1px solid var(--color-border-default, #8b949e); /* Add border */
+}
