@@ -7,7 +7,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-    border-bottom: 1px solid var(--color-border-muted, #d0d7de);
+    border-bottom: 1px solid var(--borderColor-default, #d0d7de); /* Use default border color for theme adaptation */
     padding-bottom: 6px;
     align-items: center; /* Vertically align items */
   }
@@ -82,8 +82,8 @@
     border-color: var(--color-btn-hover-border, rgba(240, 246, 252, 0.15));
   }
   html[data-color-mode="dark"] .cc-button:active {
-    background-color: var(--color-btn-active-bg, #21262d); // Adjust as needed
-    border-color: var(--color-btn-active-border, rgba(240, 246, 252, 0.1)); // Adjust as needed
+     background-color: var(--color-btn-active-bg, #21262d); // Adjust as needed
+     border-color: var(--color-btn-active-border, rgba(240, 246, 252, 0.1)); // Adjust as needed
   }
   */
 
@@ -129,10 +129,8 @@
     /* Align with GitHub's toolbar button styles */
     background: none;
     border: none;
-    padding: 4px; /* Adjust as needed */
-    margin-left: 4px; /* Space from other items */
+    padding: 8px 7px 4px 7px; /* Adjust as needed */
     cursor: pointer;
-    color: var(--color-fg-muted, #57606a); /* Use muted color */
     border-radius: 6px;
     line-height: 0; /* Prevent extra space */
     transition: background-color 0.1s ease-out, color 0.1s ease-out;
@@ -140,12 +138,12 @@
 
 .cc-settings-button svg {
     display: block; /* Prevent inline spacing issues */
-    fill: currentColor;
+    fill: var(--bgColor-default, #242f24);
 }
 
 .cc-settings-button:hover {
     background-color: var(--color-action-list-item-default-hover-bg, rgba(175, 184, 193, 0.2)); /* Subtle hover */
-    color: var(--color-fg-default, #24292f);
+    color: var(--color-fg-default, #242f24);
 }
 
 .cc-settings-button:active {
