@@ -491,49 +491,122 @@ function processCommentAreas() {
     });
 }
 
-processCommentAreas(); // Initial run
+// Enhanced initialization with multiple strategies
+let lastUrl = location.href;
+let isProcessing = false;
 
+// Function to handle URL changes
+function handleUrlChange() {
+    console.log('URL changed, processing comment areas...');
+    // Reset processing flag
+    isProcessing = false;
+    // Multiple attempts to catch late-loaded content
+    processCommentAreas();
+    setTimeout(processCommentAreas, 500);
+    setTimeout(processCommentAreas, 1000);
+    setTimeout(processCommentAreas, 2000);
+}
+
+// Listen for History API changes
+window.addEventListener('popstate', handleUrlChange);
+window.addEventListener('pushstate', handleUrlChange);
+window.addEventListener('replacestate', handleUrlChange);
+
+// Intercept History API methods
+const originalPushState = history.pushState;
+const originalReplaceState = history.replaceState;
+
+history.pushState = function() {
+    originalPushState.apply(this, arguments);
+    handleUrlChange();
+};
+
+history.replaceState = function() {
+    originalReplaceState.apply(this, arguments);
+    handleUrlChange();
+};
+
+// Periodic check for new textareas
+setInterval(() => {
+    if (!isProcessing) {
+        const textareas = document.querySelectorAll(
+            'textarea[name="comment[body]"]:not(.cc-toolbar-added), ' +
+            'textarea[id^="pull_request_review_body_"]:not(.cc-toolbar-added), ' +
+            'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)'
+        );
+        if (textareas.length > 0) {
+            console.log('Found unprocessed textareas during periodic check');
+            processCommentAreas();
+        }
+    }
+}, 1000);
+
+// Process comment areas on initial load
+processCommentAreas();
+
+// Main observer for dynamic content
 const observer = new MutationObserver((mutationsList) => {
-    for (const mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-            for (const node of mutation.addedNodes) {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    // Check if the added node itself is a relevant textarea
-                    if (node.matches('textarea[name="comment[body]"]') ||
-                        node.matches('textarea[id^="pull_request_review_body_"]') ||
-                        node.matches('textarea[id="commit-description-textarea"]')) {
-                        if (!node.classList.contains(TOOLBAR_MARKER_CLASS)) {
-                            console.log("New relevant textarea added, processing...", node);
-                            node.placeholder = ''; // Remove placeholder
-                            injectSettingsButton(node);
-                            initializeToolbarForTextarea(node);
-                        }
-                    } else if (node.querySelectorAll) {
-                        // Check if the added node contains relevant textareas
-                        const textareas = node.querySelectorAll(
-                            'textarea[name="comment[body]"]:not(.cc-toolbar-added), ' +
-                            'textarea[id^="pull_request_review_body_"]:not(.cc-toolbar-added), ' +
-                            'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)'
-                        );
-                        textareas.forEach(textarea => {
-                            console.log("Textarea found within added node, processing...", textarea);
-                                    // Find and remove the placeholder element if it exists
-                            const commentBoxContainer = textarea.closest('.CommentBox-container');
-                            if (commentBoxContainer) {
-                                const placeholderElement = commentBoxContainer.querySelector('.CommentBox-placeholder');
-                                if (placeholderElement) {
-                                    placeholderElement.remove();
-                                }
+    if (isProcessing) return;
+    isProcessing = true;
+    
+    // Use setTimeout to debounce multiple rapid changes
+    setTimeout(() => {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Check if the added node itself is a relevant textarea
+                        if (node.matches('textarea[name="comment[body]"]') ||
+                            node.matches('textarea[id^="pull_request_review_body_"]') ||
+                            node.matches('textarea[id="commit-description-textarea"]')) {
+                            if (!node.classList.contains(TOOLBAR_MARKER_CLASS)) {
+                                console.log("New relevant textarea added, processing...", node);
+                                node.placeholder = ''; // Remove placeholder
+                                injectSettingsButton(node);
+                                initializeToolbarForTextarea(node);
                             }
-                            textarea.placeholder = 'Add your comment here...'; // Remove placeholder
-                            injectSettingsButton(textarea);
-                            initializeToolbarForTextarea(textarea);
-                        });
+                        } else if (node.querySelectorAll) {
+                            // Check if the added node contains relevant textareas
+                            const textareas = node.querySelectorAll(
+                                'textarea[name="comment[body]"]:not(.cc-toolbar-added), ' +
+                                'textarea[id^="pull_request_review_body_"]:not(.cc-toolbar-added), ' +
+                                'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)'
+                            );
+                            textareas.forEach(textarea => {
+                                console.log("Textarea found within added node, processing...", textarea);
+                                // Find and remove the placeholder element if it exists
+                                const commentBoxContainer = textarea.closest('.CommentBox-container');
+                                if (commentBoxContainer) {
+                                    const placeholderElement = commentBoxContainer.querySelector('.CommentBox-placeholder');
+                                    if (placeholderElement) {
+                                        placeholderElement.remove();
+                                    }
+                                }
+                                textarea.placeholder = 'Add your comment here...'; // Remove placeholder
+                                injectSettingsButton(textarea);
+                                initializeToolbarForTextarea(textarea);
+                            });
+                        }
                     }
                 }
             }
         }
-    }
+        isProcessing = false;
+    }, 100);
 });
 
-observer.observe(document.body, { childList: true, subtree: true });
+// Configure the observer with more specific targeting
+observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'id']
+});
+
+// Force check when tab becomes visible again
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        console.log('Tab became visible, checking for unprocessed textareas');
+        processCommentAreas();
+    }
+});
