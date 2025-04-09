@@ -1,7 +1,7 @@
 # Conventional Comments Helper
 
 <p align="center">
-  <img src="assets/icon128.png" alt="Conventional Comments Helper Logo" width="128" height="128">
+  <img src="icons/icon128.png" alt="Conventional Comments Helper Logo" width="128" height="128">
 </p>
 
 > A Chrome extension that enhances code reviews by implementing the Conventional Comments standard directly in GitHub's interface.
