@@ -49,10 +49,13 @@ function createBadgeMarkdown(type, decoration) {
         badgeUrl = `https://img.shields.io/badge/${encode(label)}-${color}`;
     }
 
-    // Alt text for the image
-    const altText = decoration ? `${type} (${decoration})` : type;
+    // Create the badge markdown
+    const badge = `![](${badgeUrl})`; // Simplified alt text since we're wrapping in a link
 
-    return `![${altText}](${badgeUrl}) `; // Markdown image syntax with a trailing space
+    // Always create pullpo.io URL with query params
+    // If decoration exists, include it, otherwise just use the label
+    const pullpoUrl = `https://pullpo.io/cc?l=${encodeURIComponent(type)}${decoration ? `&d=${encodeURIComponent(decoration)}` : ''}`;
+    return `[${badge}](${pullpoUrl}) `; // Wrap badge in link with trailing space
 }
 
 const TOOLBAR_ID_PREFIX = 'conventional-comments-toolbar-'; // Use prefix for uniqueness
@@ -87,11 +90,15 @@ function updateCommentPrefix(textarea, newType, newDecoration) {
     // Find the start index of the line the cursor is currently on
     const lineStartIndex = 0; // ALWAYS TARGET THE BEGINNING OF THE TEXTAREA
 
-    // Regex to match existing conventional comment prefix (type + optional decoration OR badge)
-    // Group 1: Plain text type OR Badge alt text type part
-    // Group 3: Plain text decoration OR Badge alt text decoration part
-    // Group 5: Full badge markdown ![...](...)
-    const EXISTING_PREFIX_REGEX = /^(?:(\w+)(?:\((non-blocking|blocking|if-minor)\))?:|!\[(\w+)?(?:\s*\((non-blocking|blocking|if-minor)\))?\]\(https?:\/\/img\.shields\.io\/badge\/.*?\))/; // Simplified badge matching
+    // Regex to match existing conventional comment prefix (type + optional decoration OR badge OR linked badge)
+    // Group 1: Plain text type
+    // Group 2: Plain text decoration
+    // Group 3-4: Not used in new format
+    // The regex now handles three formats:
+    // 1. Plain text: type(decoration): 
+    // 2. Badge: ![...](https://img.shields.io/...)
+    // 3. Linked badge: [![](https://img.shields.io/...)](https://pullpo.io/...)
+    const EXISTING_PREFIX_REGEX = /^(?:(\w+)(?:\((non-blocking|blocking|if-minor)\))?:|(?:\[)?!\[(?:\w+)?(?:\s*\((?:non-blocking|blocking|if-minor)\))?\]\(https?:\/\/img\.shields\.io\/badge\/.*?\)(?:\]\(https?:\/\/pullpo\.io\/cc\?.*?\))?)/;
 
     // Check if the current line already starts with a known prefix
     const currentLineContent = currentValue.substring(lineStartIndex); // Get text from line start onwards
