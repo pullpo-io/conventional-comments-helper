@@ -1,4 +1,4 @@
-console.log("Conventional Comments Helper v0.4.0 activated");
+
 
 const CONVENTIONAL_COMMENT_LABELS = [
     { label: 'praise', desc: 'Highlight something positive.', color: '#28A745' }, // Green - Standard for success/positive feedback
@@ -89,7 +89,7 @@ function getPrettifyState() {
 
 function setPrettifyState(enabled) {
     localStorage.setItem('conventionalCommentsHelper_prettifyEnabled', enabled);
-    console.log('Prettify state saved:', enabled);
+
 }
 
 // --- Core Function: Update Comment Prefix (Handles Text or Badge) ---
@@ -125,24 +125,24 @@ function updateCommentPrefix(textarea, newType, newDecoration) {
         isReplacing = true;
         existingPrefix = match[0]; // The full matched prefix (text or badge)
         subject = currentLineContent.substring(existingPrefix.length); // Content after the prefix
-        console.log(`Replaced prefix: "${existingPrefix.trim()}" -> "${newType.trim()}"`);
+
     } else {
         // No existing prefix, insert the new one
-        console.log(`Inserted prefix: "${newType.trim()}"`);
+
     }
 
     // Determine the final prefix string based on current state
     let finalPrefixString;
     if (getPrettifyState()) {
         finalPrefixString = createBadgeMarkdown(newType, newDecoration);
-        console.log("Prettify ON - Final prefix (badge):", finalPrefixString);
+
     } else {
         finalPrefixString = newType;
         if (newDecoration) {
             finalPrefixString += `(${newDecoration})`;
         }
         finalPrefixString += ': ';
-        console.log("Prettify OFF - Final prefix (text):", finalPrefixString);
+
     }
 
     // Construct the new value by replacing the old prefix (if any) with the new one
@@ -274,7 +274,7 @@ function renderToolbar(toolbar, textarea) {
 
     // --- State 1: Initial or Change Type ---
     if (state === 'initial' || state === 'changeType') {
-        console.log(`renderToolbar (${toolbar.id}): state is '${state}', adding type buttons.`);
+
         CONVENTIONAL_COMMENT_LABELS.forEach(item => {
             const button = document.createElement('button');
             button.textContent = item.label;
@@ -384,7 +384,7 @@ function initializeToolbarForTextarea(textarea) {
     const textareaId = textarea.id || textarea.name || `cc-textarea-${Math.random().toString(36).substring(2, 9)}`; // Ensure some ID
     if (!textarea.id) textarea.id = textareaId; // Assign ID if it doesn't have one
 
-    console.log(`Initializing Conventional Comments Toolbar for: ${textarea.id}`);
+
 
     const toolbar = document.createElement('div');
     // Assign unique ID AND a way to link it back to the textarea
@@ -400,7 +400,7 @@ function initializeToolbarForTextarea(textarea) {
     toolbar.style.display = 'flex';
 
     // Initial rendering
-    console.log(` -> Calling renderToolbar for ${toolbar.id} (textarea: ${textarea.id})`);
+
     renderToolbar(toolbar, textarea);
 
     // Insert toolbar *before* the textarea
@@ -433,7 +433,7 @@ function injectSettingsButton(textarea) {
     }
 
     if (githubToolbar && !githubToolbar.classList.contains(SETTINGS_MARKER_CLASS)) {
-        console.log("GitHub Toolbar found, injecting settings button:", githubToolbar);
+
 
         // Find the controls container within the toolbar (again, selector might need updates)
         let controlsContainer = githubToolbar.querySelector('.ActionBar-item-container'); // Common in newer UIs
@@ -460,11 +460,11 @@ function injectSettingsButton(textarea) {
         const textareaId = textarea.id; // Capture textarea ID for the listener
         toggle.addEventListener('change', (event) => {
             setPrettifyState(event.target.checked); // Save state to localStorage
-            console.log(`Toggle changed for ${textareaId}. Prettify Enabled: ${event.target.checked}`);
+
             // NO LONGER MANIPULATES TOOLBAR DISPLAY HERE
         });
     } else if (!githubToolbar) {
-        // console.log("Could not find GitHub toolbar for textarea:", textarea);
+
     }
 }
 
@@ -472,7 +472,7 @@ function injectSettingsButton(textarea) {
 
 // Find all comment textareas and process them
 function processCommentAreas() {
-    console.log("Processing comment areas...");
+
     // Enhanced selector to target known GitHub comment textareas
     const commentTextareas = document.querySelectorAll(
         'textarea[name="comment[body]"]:not(.cc-toolbar-added), ' + // Standard comments
@@ -515,7 +515,7 @@ let isProcessing = false;
 
 // Function to handle URL changes
 function handleUrlChange() {
-    console.log('URL changed, processing comment areas...');
+
     // Reset processing flag
     isProcessing = false;
     // Multiple attempts to catch late-loaded content
@@ -553,7 +553,7 @@ setInterval(() => {
             'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)'
         );
         if (textareas.length > 0) {
-            console.log('Found unprocessed textareas during periodic check');
+
             processCommentAreas();
         }
     }
@@ -578,7 +578,7 @@ const observer = new MutationObserver((mutationsList) => {
                             node.matches('textarea[id^="pull_request_review_body_"]') ||
                             node.matches('textarea[id="commit-description-textarea"]')) {
                             if (!node.classList.contains(TOOLBAR_MARKER_CLASS)) {
-                                console.log("New relevant textarea added, processing...", node);
+
                                 node.placeholder = ''; // Remove placeholder
                                 injectSettingsButton(node);
                                 initializeToolbarForTextarea(node);
@@ -591,7 +591,7 @@ const observer = new MutationObserver((mutationsList) => {
                                 'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)'
                             );
                             textareas.forEach(textarea => {
-                                console.log("Textarea found within added node, processing...", textarea);
+
                                 // Find and remove the placeholder element if it exists
                                 const commentBoxContainer = textarea.closest('.CommentBox-container');
                                 if (commentBoxContainer) {
@@ -624,7 +624,7 @@ observer.observe(document.body, {
 // Force check when tab becomes visible again
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-        console.log('Tab became visible, checking for unprocessed textareas');
+
         processCommentAreas();
     }
 });
