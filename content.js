@@ -8,7 +8,6 @@ const CONVENTIONAL_COMMENT_LABELS = [
     { label: 'question', desc: 'Ask for clarification.', color: '#8B5CF6' }, // Violet/Purple - Distinct color often used for queries/info
     { label: 'thought', desc: 'Share a reflection or idea.', color: '#6B7280' }, // Cool Gray - Neutral, less prominent, for reflections
     { label: 'chore', desc: 'Request a minor, non-code task.', color: '#F97316' }, // Orange - Action-oriented but distinct from critical red/amber
-    { label: 'if-minor', desc: 'Address if the effort is small.', color: '#14B8A6' }, // Teal - Represents conditionality, distinct suggestion tone
 ];
 
 const DECORATIONS = [
