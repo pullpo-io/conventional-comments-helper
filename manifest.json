@@ -4,7 +4,7 @@
     "version": "0.1.0",
     "description": "Helps format code review comments on GitHub using the Conventional Comments standard.",
     "permissions": [
-      "storage" // Optional: Could be used for future settings
+      "storage"
     ],
     "host_permissions": [
       "*://github.com/*"
@@ -19,11 +19,11 @@
         "matches": [
           "*://github.com/*/*/pull/*",
           "*://github.com/*/*/commit/*",
-          "*://github.com/*/*/pulls/*" // For the general PR list view commenting
+          "*://github.com/*/*/pulls/*"
         ],
         "js": ["content.js"],
         "css": ["style.css"],
-        "run_at": "document_idle" // Run after the page is mostly loaded
+        "run_at": "document_idle"
       }
     ]
   }
