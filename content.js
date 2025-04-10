@@ -1,52 +1,64 @@
 console.log("Conventional Comments Helper v0.4.0 activated");
 
 const CONVENTIONAL_COMMENT_LABELS = [
-    { label: 'praise', desc: 'Highlight something positive.' },
-    { label: 'nitpick', desc: 'Minor, non-blocking issues (style, naming...).' },
-    { label: 'suggestion', desc: 'Suggest specific improvements.' },
-    { label: 'issue', desc: 'Point out a blocking problem.' },
-    { label: 'question', desc: 'Ask for clarification.' },
-    { label: 'thought', desc: 'Share a reflection or idea.' },
-    { label: 'chore', desc: 'Request a minor, non-code task.' },
-    { label: 'if-minor', desc: 'Address if the effort is small.' }
+    { label: 'praise', desc: 'Highlight something positive.', color: '#28A745' }, // Green - Standard for success/positive feedback
+    { label: 'nitpick', desc: 'Minor, non-blocking issues (style, naming...).', color: '#F59E0B' }, // Amber/Dark Yellow - Suggests caution, minor warning
+    { label: 'suggestion', desc: 'Suggest specific improvements.', color: '#3B82F6' }, // Blue - Often used for informational/suggestions
+    { label: 'issue', desc: 'Point out a blocking problem.', color: '#EF4444' }, // Red - Standard for errors/critical problems
+    { label: 'question', desc: 'Ask for clarification.', color: '#8B5CF6' }, // Violet/Purple - Distinct color often used for queries/info
+    { label: 'thought', desc: 'Share a reflection or idea.', color: '#6B7280' }, // Cool Gray - Neutral, less prominent, for reflections
+    { label: 'chore', desc: 'Request a minor, non-code task.', color: '#F97316' }, // Orange - Action-oriented but distinct from critical red/amber
+    { label: 'if-minor', desc: 'Address if the effort is small.', color: '#14B8A6' }, // Teal - Represents conditionality, distinct suggestion tone
 ];
 
 const DECORATIONS = [
-    { label: 'non-blocking', desc: 'Optional change, doesn\'t block merge.' },
-    { label: 'blocking', desc: 'Must be addressed before merge.' },
-    { label: 'if-minor', desc: 'Address if the effort is small.' }
+    { label: 'non-blocking', desc: 'Optional change, doesn\'t block merge.', color: '#9CA3AF' }, // Light/Medium Gray - Indicates reduced severity/optionality
+    { label: 'blocking', desc: 'Must be addressed before merge.', color: '#374151' }, // Dark Gray/Charcoal - Serious, indicates high importance/blocker
+    { label: 'if-minor', desc: 'Address if the effort is small.', color: '#14B8A6' } // Teal - Represents conditionality, distinct suggestion tone
 ];
 
-// Helper function for badge colors (can be expanded)
+// Helper function for badge colors using hex values
 function getBadgeColor(type) {
-    switch (type) {
-        case 'praise': return 'brightgreen';
-        case 'nitpick': return 'yellow';
-        case 'suggestion': return 'blue';
-        case 'issue': return 'red';
-        case 'question': return 'purple';
-        case 'thought': return 'lightgrey';
-        case 'chore': return 'orange';
-        default: return 'lightgrey';
-    }
+    // Find the label object
+    const label = CONVENTIONAL_COMMENT_LABELS.find(l => l.label === type);
+    // Return the color if found, otherwise default to gray
+    return label ? label.color.substring(1) : '6B7280'; // Remove # from hex color for shields.io
 }
 
 // Helper function to create badge markdown
 function createBadgeMarkdown(type, decoration) {
-    const color = getBadgeColor(type);
+    // Get the label color (without #)
+    const labelColor = getBadgeColor(type);
     let label = type;
     let message = decoration || ''; // Use decoration as message if present
+    let decorationColor = '';
+    
+    // Get decoration color if a decoration is specified
+    if (decoration) {
+        const decorObj = DECORATIONS.find(d => d.label === decoration);
+        if (decorObj) {
+            decorationColor = decorObj.color.substring(1); // Remove # from hex color
+        }
+    }
+    
     let badgeUrl;
 
     // Simple URL encoding for badge parts
     const encode = (str) => encodeURIComponent(str.replace(/-/g, '--').replace(/_/g, '__')); // Shields.io escaping
 
     if (message) {
-        // Format: https://img.shields.io/badge/<LABEL>-<MESSAGE>-<COLOR>
-        badgeUrl = `https://img.shields.io/badge/${encode(label)}-${encode(message)}-${color}`;
+        // If we have both a label and decoration with their colors
+        if (decorationColor) {
+            // Format: https://img.shields.io/badge/<LABEL>-<MESSAGE>-<DECORATION_COLOR>?labelColor=<LABEL_COLOR>
+            // Use decoration color for the badge background and labelColor for the label part
+            badgeUrl = `https://img.shields.io/badge/${encode(label)}-${encode(message)}-${decorationColor}?labelColor=${labelColor}`;
+        } else {
+            // If decoration has no specific color, use the label color for the whole badge
+            badgeUrl = `https://img.shields.io/badge/${encode(label)}-${encode(message)}-${labelColor}`;
+        }
     } else {
         // Format: https://img.shields.io/badge/<LABEL>-<COLOR> (No message part)
-        badgeUrl = `https://img.shields.io/badge/${encode(label)}-${color}`;
+        badgeUrl = `https://img.shields.io/badge/${encode(label)}-${labelColor}`;
     }
 
     // Create the badge markdown
