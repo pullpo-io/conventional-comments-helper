@@ -299,8 +299,8 @@ function renderToolbar(toolbar, textarea) {
                     toolbar.dataset.selectedDecoration = '';
                     toolbar.dataset.state = 'initial';
                     
-                    // Remove the prefix from textarea
-                    textarea.value = textarea.value.replace(/^(?:(?:\w+)(?:\((?:non-blocking|blocking|if-minor)\))?:|!\[(?:\w+)?(?:\s*\((?:non-blocking|blocking|if-minor)\))?\]\(https?:\/\/img\.shields\.io\/badge\/.*?\))\s*/, '');
+                    // Remove the prefix from textarea - handles both text format and badge format (including linked badges)
+                    textarea.value = textarea.value.replace(/^(?:(?:\w+)(?:\((?:non-blocking|blocking|if-minor)\))?:|(?:\[)?!\[(?:[^\]]*?)\]\(https?:\/\/img\.shields\.io\/badge\/[^)]*?\)(?:\]\(https?:\/\/pullpo\.io\/cc\?[^)]*?\))?)\s*/, '');
                     textarea.dispatchEvent(new Event('input', { bubbles: true }));
                     textarea.dispatchEvent(new Event('change', { bubbles: true }));
                 } else {
