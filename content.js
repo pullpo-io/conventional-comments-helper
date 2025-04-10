@@ -146,28 +146,49 @@ function updateCommentPrefix(textarea, newType, newDecoration) {
     }
 
     // Construct the new value by replacing the old prefix (if any) with the new one
-    const newValue = finalPrefixString + subject; // Since lineStartIndex is 0
-
-    // Calculate new cursor position
-    const lengthDifference = finalPrefixString.length - existingPrefix.length;
-    let newSelectionStart = originalSelectionStart;
-
-    // Adjust cursor only if it was positioned after the prefix we are replacing/inserting
-    if (originalSelectionStart >= existingPrefix.length) {
-        newSelectionStart = originalSelectionStart + lengthDifference;
+    // In prettify mode, ensure there's a newline after the badge
+    let newValue;
+    if (getPrettifyState() && newType && newType !== '') {
+        if (!subject.startsWith('\n')) {
+            newValue = finalPrefixString + '\n' + subject.trimStart();
+        } else {
+            newValue = finalPrefixString + subject;
+        }
     } else {
-        // If cursor was inside the prefix, move it to the end of the new prefix
+        newValue = finalPrefixString + subject; // Since lineStartIndex is 0
+    }
+
+    // Calculate new cursor position based on the state
+    let newSelectionStart = 0;
+    let newSelectionEnd = 0;
+    
+    // If we're removing the label (finalPrefixString is empty)
+    if (!newType || newType === '') {
+        // Position cursor at the beginning of the first line
+        newSelectionStart = 0;
+        newSelectionEnd = 0;
+    } else if (getPrettifyState()) {
+        // In prettify mode with badge
+        // Add a newline after the badge if there isn't one already
+        if (!subject.startsWith('\n')) {
+            subject = '\n' + subject;
+        }
+        // Position cursor at the beginning of the line after the badge
+        newSelectionStart = finalPrefixString.length + 1; // +1 for the newline
+        newSelectionEnd = newSelectionStart;
+    } else {
+        // In text mode
+        // Position cursor after the prefix
         newSelectionStart = finalPrefixString.length;
+        newSelectionEnd = newSelectionStart;
     }
 
     // Update the textarea value
     textarea.value = newValue;
 
-    // Set cursor position after the prefix
-    // Ensure cursor position is not negative
+    // Set cursor position based on our calculations
     textarea.selectionStart = Math.max(0, newSelectionStart);
-    // Preserve selection range if user had text selected, adjusting by length difference
-    textarea.selectionEnd = Math.max(0, newSelectionStart + (originalSelectionEnd - originalSelectionStart));
+    textarea.selectionEnd = Math.max(0, newSelectionEnd);
 
     // Dispatch events for framework compatibility & placeholder handling
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
