@@ -129,92 +129,26 @@ html[data-color-mode="dark"][data-dark-theme="dark_high_contrast"] .cc-selected-
     cursor: pointer;
     border-radius: 6px;
     line-height: 0; /* Prevent extra space */
+    color: var(--color-fg-muted, #57606a);
     transition: background-color 0.1s ease-out, color 0.1s ease-out;
 }
 
 .cc-settings-button svg {
     display: block; /* Prevent inline spacing issues */
     fill: transparent;
+    stroke: currentColor;
 }
 
 .cc-settings-button:hover {
     background-color: var(--color-action-list-item-default-hover-bg, rgba(175, 184, 193, 0.2)); /* Subtle hover */
-    color: var(--color-fg-default, #242f24);
-}
-
-.cc-settings-button:active {
-     background-color: var(--color-action-list-item-default-active-bg, rgba(175, 184, 193, 0.3));
-}
-
-.cc-settings-dropdown {
-    position: absolute; /* Positioned by JS */
-    z-index: 100; /* Ensure it's above other elements */
-    background-color: var(--color-canvas-overlay, #ffffff);
-    border: 1px solid var(--color-border-default, #d0d7de);
-    border-radius: 6px;
-    padding: 8px 12px;
-    box-shadow: var(--color-shadow-medium, 0 3px 6px rgba(140,149,159,0.15));
-    font-size: 12px;
     color: var(--color-fg-default, #24292f);
-    /* Transition for fade-in/out */
-    transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out;
-    /* Initially hidden */
-    visibility: hidden;
-    opacity: 0;
 }
 
-.cc-settings-dropdown.active {
-    visibility: visible;
-    opacity: 1;
-}
-
-.cc-settings-toggle-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    user-select: none; /* Prevent text selection */
-}
-
-.cc-settings-toggle {
-    margin-left: 8px;
-    cursor: pointer;
-    /* Basic styling, can hide and use custom switch */
-    appearance: none; /* Hide default checkbox */
-    width: 36px; /* Size of the switch track */
-    height: 20px;
-    background-color: var(--color-neutral-muted, #d0d7de);
-    border-radius: 10px;
-    position: relative;
-    transition: background-color 0.2s ease;
-    outline: none;
-}
-
-/* The circle/knob of the switch */
-.cc-settings-toggle::before {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background-color: var(--color-fg-on-emphasis, #ffffff);
-    top: 2px;
-    left: 2px;
-    transition: transform 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-.cc-settings-toggle:checked {
-    background-color: var(--color-success-fg, #1f883d);
-}
-
-.cc-settings-toggle:checked::before {
-    transform: translateX(16px); /* Move knob to the right */
-}
-
-/* Hide the temporary span if we use the checkbox styling */
-.cc-settings-toggle-switch {
-    display: none;
+/* --- Active State for Settings Button --- */
+.cc-settings-button.cc-settings-button-active {
+  /* Use accent color for active state */
+  background-color: var(--color-accent-subtle, #ddf4ff);
+  color: var(--color-accent-fg, #0969da);
 }
 
 
@@ -229,35 +163,7 @@ html[data-color-mode="dark"] .cc-settings-button:hover {
     color: var(--color-fg-default, #c9d1d9);
 }
 
-html[data-color-mode="dark"] .cc-settings-button:active {
-     background-color: var(--color-action-list-item-default-active-bg, rgba(187, 196, 206, 0.15));
-}
-
-html[data-color-mode="dark"] .cc-settings-dropdown {
-    background-color: var(--color-canvas-overlay, #161b22);
-    border-color: var(--color-border-default, #30363d);
-    box-shadow: var(--color-shadow-large, 0 8px 24px rgba(1,4,9,0.8));
-    color: var(--color-fg-default, #c9d1d9);
-}
-
-html[data-color-mode="dark"] .cc-settings-toggle {
-    background-color: var(--color-neutral-muted, #30363d);
-}
-
-html[data-color-mode="dark"] .cc-settings-toggle:checked {
-    background-color: var(--color-success-fg, #3fb950);
-}
-
-html[data-color-mode="dark"] .cc-settings-toggle::before {
-    background-color: var(--color-fg-on-emphasis, #0d1117);
-}
-
-/* Optional: High contrast dark mode for settings */
-html[data-color-mode="dark"][data-dark-theme="dark_high_contrast"] .cc-settings-dropdown {
-     background-color: var(--color-canvas-default, #010409);
-     border-color: var(--color-border-default, #8b949e);
-}
-
-html[data-color-mode="dark"][data-dark-theme="dark_high_contrast"] .cc-settings-toggle {
-     border: 1px solid var(--color-border-default, #8b949e); /* Add border */
+html[data-color-mode="dark"] .cc-settings-button.cc-settings-button-active {
+  background-color: var(--color-accent-subtle, rgba(56, 139, 253, 0.15));
+  color: var(--color-accent-fg, #58a6ff);
 }
