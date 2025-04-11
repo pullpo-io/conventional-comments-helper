@@ -1,6 +1,4 @@
-
-
-const CONVENTIONAL_COMMENT_LABELS = [
+const LABELS = [
     { label: 'praise', desc: 'Highlight something positive.', color: '#28A745' }, // Green - Standard for success/positive feedback
     { label: 'nitpick', desc: 'Minor, non-blocking issues (style, naming...).', color: '#F59E0B' }, // Amber/Dark Yellow - Suggests caution, minor warning
     { label: 'suggestion', desc: 'Suggest specific improvements.', color: '#3B82F6' }, // Blue - Often used for informational/suggestions
@@ -19,7 +17,7 @@ const DECORATIONS = [
 // Helper function for badge colors using hex values
 function getBadgeColor(type) {
     // Find the label object
-    const label = CONVENTIONAL_COMMENT_LABELS.find(l => l.label === type);
+    const label = LABELS.find(l => l.label === type);
     // Return the color if found, otherwise default to gray
     return label ? label.color.substring(1) : '6B7280'; // Remove # from hex color for shields.io
 }
@@ -61,7 +59,7 @@ function createBadgeMarkdown(type, decoration) {
     }
 
     // Create the badge markdown
-    const badge = `![](${badgeUrl})`; // Simplified alt text since we're wrapping in a link
+    const badge = `![${type}${decoration ? `(${decoration})` : ''}](${badgeUrl})`;
 
     // Always create pullpo.io URL with query params
     // If decoration exists, include it, otherwise just use the label
@@ -79,107 +77,68 @@ let settingsCounter = 0; // Unique IDs for settings elements
 // --- Global Selector for Textareas ---
 const COMMENT_TEXTAREA_SELECTOR = 'textarea[aria-label*="comment"], textarea[name="comment[body]"], textarea[name="pull_request_review[body]"], textarea#new_commit_comment_field';
 
+// --- Selector for formatted Conventional Comments ---
+const PLAIN_CC_REGEX = /^\s*(?:(praise|nitpick|suggestion|issue|question|thought|chore)\s*(?:\((non-blocking|blocking|if-minor)\))?:)\s*/;
+const BADGE_CC_REGEX = /^\s*\[\!\[(?:(praise|nitpick|suggestion|issue|question|thought|chore)(?:\((non-blocking|blocking|if-minor)\))?)\]\(https?:\/\/img\.shields\.io\/badge\/.*?\)\]\(https?:\/\/pullpo\.io\/cc\?.*?\)\s*/;
+
 // --- LocalStorage Helpers ---
-function getPrettifyState() {
+function getPreferredPrettifyState() {
     // Defaults to true if not set
-    const storedValue = localStorage.getItem('conventionalCommentsHelper_prettifyEnabled');
-    return storedValue === null ? true : storedValue === 'true';
+    return localStorage.getItem('conventionalCommentsHelper_prettifyEnabled') ?? 'true';
 }
 
-function setPrettifyState(enabled) {
+function setPreferredPrettifyState(enabled) {
     localStorage.setItem('conventionalCommentsHelper_prettifyEnabled', enabled);
-
 }
 
 // --- Core Function: Update Comment Prefix (Handles Text or Badge) ---
-function updateCommentPrefix(textarea, newType, newDecoration) {
-    const currentValue = textarea.value;
+function updateCommentPrefix(toolbar, textarea) {
+    const currentValue = textarea.value;    
     const originalSelectionStart = textarea.selectionStart; // Store original cursor position
     const originalSelectionEnd = textarea.selectionEnd; // Store original selection end (if any)
 
-    // Find the start index of the line the cursor is currently on
-    const lineStartIndex = 0; // ALWAYS TARGET THE BEGINNING OF THE TEXTAREA
+    const newType = toolbar.dataset.selectedType;
+    const newDecoration = toolbar.dataset.selectedDecoration;
+    const newPrettified = toolbar.dataset.prettified === 'true';
 
-    // Regex to match existing conventional comment prefix (type + optional decoration OR badge OR linked badge)
-    // Group 1: Plain text type
-    // Group 2: Plain text decoration
-    // Group 3-4: Not used in new format
-    // The regex now handles three formats:
-    // 1. Plain text: type(decoration): 
-    // 2. Badge: ![...](https://img.shields.io/...)
-    // 3. Linked badge: [![](https://img.shields.io/...)](https://pullpo.io/...)
-    const EXISTING_PREFIX_REGEX = /^(?:(\w+)(?:\((non-blocking|blocking|if-minor)\))?:|(?:\[)?!\[(?:\w+)?(?:\s*\((?:non-blocking|blocking|if-minor)\))?\]\(https?:\/\/img\.shields\.io\/badge\/.*?\)(?:\]\(https?:\/\/pullpo\.io\/cc\?.*?\))?)/;
+    const match = currentValue.match(PLAIN_CC_REGEX) ?? currentValue.match(BADGE_CC_REGEX);
 
-    // Check if the current line already starts with a known prefix
-    const currentLineContent = currentValue.substring(lineStartIndex); // Get text from line start onwards
-
-    const match = currentLineContent.match(EXISTING_PREFIX_REGEX);
-
-    let existingPrefix = '';
-    let subject = currentLineContent; // Default to the whole line content
-    let isReplacing = false;
+    let initialPrefix = '';
+    let subject = currentValue; // Default to the whole line content
 
     if (match) {
         // Existing prefix found, replace it
         isReplacing = true;
-        existingPrefix = match[0]; // The full matched prefix (text or badge)
-        subject = currentLineContent.substring(existingPrefix.length); // Content after the prefix
-
-    } else {
-        // No existing prefix, insert the new one
-
+        initialPrefix = match[0]; // The full matched prefix (text or badge)
+        subject = currentValue.substring(initialPrefix.length); // Content after the prefix
     }
 
-    // Determine the final prefix string based on current state
-    let finalPrefixString;
-    if (getPrettifyState()) {
-        finalPrefixString = createBadgeMarkdown(newType, newDecoration);
-
+    // Determine the final prefix string based on current state and calculate new value
+    let newPrefix, newValue;
+    if (newPrettified) {
+        newPrefix = createBadgeMarkdown(newType, newDecoration) + '\n';
+        newValue = newPrefix + subject.trimStart();
     } else {
-        finalPrefixString = newType;
+        newPrefix = newType;
         if (newDecoration) {
-            finalPrefixString += `(${newDecoration})`;
+            newPrefix += `(${newDecoration})`;
         }
-        finalPrefixString += ': ';
 
-    }
-
-    // Construct the new value by replacing the old prefix (if any) with the new one
-    // In prettify mode, ensure there's a newline after the badge
-    let newValue;
-    if (getPrettifyState() && newType && newType !== '') {
-        if (!subject.startsWith('\n')) {
-            newValue = finalPrefixString + '\n' + subject.trimStart();
-        } else {
-            newValue = finalPrefixString + subject;
-        }
-    } else {
-        newValue = finalPrefixString + subject; // Since lineStartIndex is 0
+        newPrefix += ': ';
+        newValue = newPrefix + subject;
     }
 
     // Calculate new cursor position based on the state
     let newSelectionStart = 0;
     let newSelectionEnd = 0;
     
-    // If we're removing the label (finalPrefixString is empty)
-    if (!newType || newType === '') {
-        // Position cursor at the beginning of the first line
-        newSelectionStart = 0;
-        newSelectionEnd = 0;
-    } else if (getPrettifyState()) {
-        // In prettify mode with badge
-        // Add a newline after the badge if there isn't one already
-        if (!subject.startsWith('\n')) {
-            subject = '\n' + subject;
-        }
-        // Position cursor at the beginning of the line after the badge
-        newSelectionStart = finalPrefixString.length + 1; // +1 for the newline
-        newSelectionEnd = newSelectionStart;
-    } else {
-        // In text mode
-        // Position cursor after the prefix
-        newSelectionStart = finalPrefixString.length;
-        newSelectionEnd = newSelectionStart;
+    if (newType) {
+        // Adding or changing label: move cursor by the difference.
+        newSelectionStart = originalSelectionStart - initialPrefix.length + newPrefix.length;
+        newSelectionEnd = originalSelectionEnd - initialPrefix.length + newPrefix.length;
+    } else { // Removing the label: move cursor back accordingly.
+        newSelectionStart = originalSelectionStart - initialPrefix.length;
+        newSelectionEnd = originalSelectionEnd - initialPrefix.length;
     }
 
     // Update the textarea value
@@ -217,6 +176,7 @@ function createSettingsDropdown(id, initialState) {
     toggle.classList.add('cc-settings-toggle');
 
     label.appendChild(toggle);
+
     // Simple visual indicator for the switch (can be enhanced with CSS)
     const switchSpan = document.createElement('span');
     switchSpan.classList.add('cc-settings-toggle-switch');
@@ -227,7 +187,7 @@ function createSettingsDropdown(id, initialState) {
 }
 
 // Function to create the settings button
-function createSettingsButton() {
+function createSettingsButton(prettifyEnabled) {
     const button = document.createElement('button');
     button.id = `${SETTINGS_BUTTON_ID_PREFIX}${settingsCounter}`;
     button.type = 'button';
@@ -240,7 +200,6 @@ function createSettingsButton() {
 `
 
     const dropdownId = `${SETTINGS_DROPDOWN_ID_PREFIX}${settingsCounter}`;
-    const prettifyEnabled = getPrettifyState();
     const dropdown = createSettingsDropdown(dropdownId, prettifyEnabled);
 
     // Append dropdown to the body initially to handle potential overflow issues
@@ -285,13 +244,13 @@ function renderToolbar(toolbar, textarea) {
     const state = toolbar.dataset.state || 'initial';
     const selectedType = toolbar.dataset.selectedType || null;
     const selectedDecoration = toolbar.dataset.selectedDecoration || null;
+    const prettifyEnabled = (toolbar.dataset.prettified ?? getPreferredPrettifyState()) === 'true';
 
     toolbar.innerHTML = ''; // Clear previous content
 
     // --- State 1: Initial or Change Type ---
     if (state === 'initial' || state === 'changeType') {
-
-        CONVENTIONAL_COMMENT_LABELS.forEach(item => {
+        LABELS.forEach(item => {
             const button = document.createElement('button');
             button.textContent = item.label;
             button.title = item.desc;
@@ -315,18 +274,17 @@ function renderToolbar(toolbar, textarea) {
                     toolbar.dataset.state = 'initial';
                     
                     // Remove the prefix from textarea - handles both text format and badge format (including linked badges)
-                    textarea.value = textarea.value.replace(/^(?:(?:\w+)(?:\((?:non-blocking|blocking|if-minor)\))?:|(?:\[)?!\[(?:[^\]]*?)\]\(https?:\/\/img\.shields\.io\/badge\/[^)]*?\)(?:\]\(https?:\/\/pullpo\.io\/cc\?[^)]*?\))?)\s*/, '');
+                    textarea.value = textarea.value.replace(PLAIN_CC_REGEX, '').replace(BADGE_CC_REGEX, '');
                     textarea.dispatchEvent(new Event('input', { bubbles: true }));
                     textarea.dispatchEvent(new Event('change', { bubbles: true }));
                 } else {
                     // Select new type
-                    const newSelectedType = item.label;
-                    toolbar.dataset.selectedType = newSelectedType;
+                    toolbar.dataset.selectedType = item.label;
                     toolbar.dataset.selectedDecoration = ''; // Reset decoration
                     toolbar.dataset.state = 'typeSelected';
 
                     // Update the comment in the textarea
-                    updateCommentPrefix(textarea, newSelectedType, null);
+                    updateCommentPrefix(toolbar, textarea);
                 }
 
                 // Re-render the toolbar for the new state
@@ -379,12 +337,11 @@ function renderToolbar(toolbar, textarea) {
                 // Toggle off if clicking the same decoration
                 if (currentSelectedDecoration === decItem.label) {
                     toolbar.dataset.selectedDecoration = '';
-                    updateCommentPrefix(textarea, selectedType, null);
+                    updateCommentPrefix(toolbar, textarea);
                 } else {
                     // Select new decoration
-                    const newSelectedDecoration = decItem.label;
-                    toolbar.dataset.selectedDecoration = newSelectedDecoration;
-                    updateCommentPrefix(textarea, selectedType, newSelectedDecoration);
+                    toolbar.dataset.selectedDecoration = decItem.label;
+                    updateCommentPrefix(toolbar, textarea);
                 }
 
                 // Re-render toolbar to update decoration highlight
@@ -395,7 +352,7 @@ function renderToolbar(toolbar, textarea) {
     }
 
     // Create and Add Settings Button
-    const { button: settingsButton, dropdown: settingsDropdown } = createSettingsButton(textarea);
+    const { button: settingsButton, dropdown: settingsDropdown } = createSettingsButton(prettifyEnabled);
 
     // Create a wrapper for the settings button for styling/positioning
     const settingsButtonWrapper = document.createElement('div');
@@ -408,14 +365,11 @@ function renderToolbar(toolbar, textarea) {
     // Add listener to the toggle within the dropdown (which is appended to body)
     const toggle = settingsDropdown.querySelector('.cc-settings-toggle');
     toggle.addEventListener('change', (event) => {
-        setPrettifyState(event.target.checked);
-        // Need to update the current prefix if the state changes
-        // Get current selections from the toolbar dataset
-        const currentType = toolbar.dataset.selectedType;
-        const currentDecoration = toolbar.dataset.selectedDecoration;
+        toolbar.dataset.prettified = event.target.checked.toString();
+        setPreferredPrettifyState(toolbar.dataset.prettified);
         // Only update if a type is actually selected
-        if (currentType) {
-             updateCommentPrefix(textarea, currentType, currentDecoration);
+        if (toolbar.dataset.selectedType) {
+            updateCommentPrefix(toolbar, textarea);
         }
     });
 
@@ -430,17 +384,18 @@ function initializeToolbarForTextarea(textarea) {
     const textareaId = textarea.id || textarea.name || `cc-textarea-${Math.random().toString(36).substring(2, 9)}`; // Ensure some ID
     if (!textarea.id) textarea.id = textareaId; // Assign ID if it doesn't have one
 
-
-
     const toolbar = document.createElement('div');
     // Assign unique ID AND a way to link it back to the textarea
     toolbar.id = `${TOOLBAR_ID_PREFIX}${toolbarCounter++}`;
     toolbar.dataset.textareaId = textarea.id; // Link to textarea using its ID
     toolbar.classList.add('cc-toolbar');
+
     // Initialize state
-    toolbar.dataset.state = 'initial'; // Start in initial state
-    toolbar.dataset.selectedType = '';
-    toolbar.dataset.selectedDecoration = '';
+    const initialState = extractInitialTextareaState(textarea);
+    toolbar.dataset.state = initialState.state; // Start in initial state
+    toolbar.dataset.selectedType = initialState.label;
+    toolbar.dataset.selectedDecoration = initialState.decorator;
+    toolbar.dataset.prettified = initialState.prettified;
 
     // Set initial visibility - ALWAYS VISIBLE NOW
     toolbar.style.display = 'flex';
@@ -452,6 +407,23 @@ function initializeToolbarForTextarea(textarea) {
     textarea.parentNode?.insertBefore(toolbar, textarea); // Safer insertion
 
     textarea.classList.add(TOOLBAR_MARKER_CLASS); // Mark textarea
+}
+
+// --- Funtion to detect if textarea contains previous conventional comment and initialize state ---
+function extractInitialTextareaState(textarea) {
+    const initialValue = textarea.value;
+
+    const plainMatch = initialValue.match(PLAIN_CC_REGEX)
+    if (plainMatch) {
+        return { state: 'typeSelected', label: plainMatch[1], decorator: plainMatch[2], prettified: 'false' };
+    }
+    
+    const badgeMatch = initialValue.match(BADGE_CC_REGEX);
+    if (badgeMatch) {
+        return { state: 'typeSelected', label: badgeMatch[1], decorator: badgeMatch[2], prettified: 'true' };
+    }
+
+    return { state: 'initial', label: '', decorator: '', prettified: getPreferredPrettifyState() };
 }
 
 // --- Main Execution & Mutation Observer ---
