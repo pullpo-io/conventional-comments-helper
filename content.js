@@ -1,3 +1,30 @@
+// --- Selector Constants ---
+
+const TOOLBAR_ID_PREFIX = 'conventional-comments-toolbar-'; // Use prefix for uniqueness
+const TOOLBAR_MARKER_CLASS = 'cc-toolbar-added';
+const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-'; // Prefix for settings button IDs
+const SETTINGS_DROPDOWN_ID_PREFIX = 'cc-settings-dropdown-'; // Prefix for settings dropdown IDs
+
+// --- Global Selector for Textareas ---
+
+// Selectors for GitHub textareas where the toolbar should appear
+const TARGET_TEXTAREA_SELECTORS = [
+    'textarea[name="comment[body]"]',                     // Standard issue/PR comments
+    'textarea[id^="pull_request_review_body_"]',         // Editing existing PR review line comments
+    'textarea[id="commit-description-textarea"]',        // Commit descriptions
+    'textarea[name="pull_request_review[body]"]' // Review Changes modal/popup form
+];
+
+// Combine selectors with :not(.cc-toolbar-added) for querying unprocessed textareas
+const UNPROCESSED_TEXTAREA_QUERY = TARGET_TEXTAREA_SELECTORS.map(
+    sel => `${sel}:not(.${TOOLBAR_MARKER_CLASS})`
+).join(', ');
+
+// Selector matching any target textarea
+const ANY_TARGET_TEXTAREA_QUERY = TARGET_TEXTAREA_SELECTORS.join(', ');
+
+// --- Components of a Conventional Comment ---
+
 const LABELS = [
     { label: 'praise', desc: 'Highlight something positive.', color: '#28A745' }, // Green - Standard for success/positive feedback
     { label: 'nitpick', desc: 'Minor, non-blocking issues (style, naming...).', color: '#F59E0B' }, // Amber/Dark Yellow - Suggests caution, minor warning
@@ -13,6 +40,18 @@ const DECORATIONS = [
     { label: 'blocking', desc: 'Must be addressed before merge.', color: '#374151' }, // Dark Gray/Charcoal - Serious, indicates high importance/blocker
     { label: 'if-minor', desc: 'Address if the effort is small.', color: '#14B8A6' } // Teal - Represents conditionality, distinct suggestion tone
 ];
+
+// --- Selector for formatted Conventional Comments ---
+
+const PLAIN_CC_REGEX = /^\s*(?:(praise|nitpick|suggestion|issue|question|thought|chore)\s*(?:\((non-blocking|blocking|if-minor)\))?:)\s*/;
+const BADGE_CC_REGEX = /^\s*\[\!\[(?:(praise|nitpick|suggestion|issue|question|thought|chore)(?:\((non-blocking|blocking|if-minor)\))?)\]\(https?:\/\/img\.shields\.io\/badge\/.*?\)\]\(https?:\/\/pullpo\.io\/cc\?.*?\)\s*/;
+
+// --- Global Couters ---
+
+let toolbarCounter = 0; // Ensure unique IDs if multiple textareas load simultaneously
+let settingsCounter = 0; // Unique IDs for settings elements
+
+// --- Badge Helpers ---
 
 // Helper function for badge colors using hex values
 function getBadgeColor(type) {
@@ -67,21 +106,8 @@ function createBadgeMarkdown(type, decoration) {
     return `[${badge}](${pullpoUrl}) `; // Wrap badge in link with trailing space
 }
 
-const TOOLBAR_ID_PREFIX = 'conventional-comments-toolbar-'; // Use prefix for uniqueness
-const TOOLBAR_MARKER_CLASS = 'cc-toolbar-added';
-const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-'; // Prefix for settings button IDs
-const SETTINGS_DROPDOWN_ID_PREFIX = 'cc-settings-dropdown-'; // Prefix for settings dropdown IDs
-let toolbarCounter = 0; // Ensure unique IDs if multiple textareas load simultaneously
-let settingsCounter = 0; // Unique IDs for settings elements
-
-// --- Global Selector for Textareas ---
-const COMMENT_TEXTAREA_SELECTOR = 'textarea[aria-label*="comment"], textarea[name="comment[body]"], textarea[name="pull_request_review[body]"], textarea#new_commit_comment_field';
-
-// --- Selector for formatted Conventional Comments ---
-const PLAIN_CC_REGEX = /^\s*(?:(praise|nitpick|suggestion|issue|question|thought|chore)\s*(?:\((non-blocking|blocking|if-minor)\))?:)\s*/;
-const BADGE_CC_REGEX = /^\s*\[\!\[(?:(praise|nitpick|suggestion|issue|question|thought|chore)(?:\((non-blocking|blocking|if-minor)\))?)\]\(https?:\/\/img\.shields\.io\/badge\/.*?\)\]\(https?:\/\/pullpo\.io\/cc\?.*?\)\s*/;
-
 // --- LocalStorage Helpers ---
+
 function getPreferredPrettifyState() {
     // Defaults to true if not set
     return localStorage.getItem('conventionalCommentsHelper_prettifyEnabled') ?? 'true';
@@ -431,17 +457,9 @@ function extractInitialTextareaState(textarea) {
 // Find all comment textareas and process them
 function processCommentAreas() {
     // Enhanced selector to target known GitHub comment textareas
-    const commentTextareas = document.querySelectorAll(
-        'textarea[name="comment[body]"]:not(.cc-toolbar-added), ' + // Standard comments
-        'textarea[id^="pull_request_review_body_"]:not(.cc-toolbar-added), ' + // PR review comments
-        'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)' // Commit descriptions
-    );
+    const commentTextareas = document.querySelectorAll(UNPROCESSED_TEXTAREA_QUERY);
 
     commentTextareas.forEach(textarea => {
-        if (!textarea || textarea.classList.contains(TOOLBAR_MARKER_CLASS)) {
-            return; // Skip if already processed or not found
-        }
-
         // Remove placeholder text and element
         textarea.placeholder = 'Add your comment here...';
         
@@ -501,13 +519,8 @@ history.replaceState = function() {
 // Periodic check for new textareas
 setInterval(() => {
     if (!isProcessing) {
-        const textareas = document.querySelectorAll(
-            'textarea[name="comment[body]"]:not(.cc-toolbar-added), ' +
-            'textarea[id^="pull_request_review_body_"]:not(.cc-toolbar-added), ' +
-            'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)'
-        );
+        const textareas = document.querySelectorAll(UNPROCESSED_TEXTAREA_QUERY);
         if (textareas.length > 0) {
-
             processCommentAreas();
         }
     }
@@ -528,23 +541,14 @@ const observer = new MutationObserver((mutationsList) => {
                 for (const node of mutation.addedNodes) {
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         // Check if the added node itself is a relevant textarea
-                        if (node.matches('textarea[name="comment[body]"]') ||
-                            node.matches('textarea[id^="pull_request_review_body_"]') ||
-                            node.matches('textarea[id="commit-description-textarea"]')) {
-                            if (!node.classList.contains(TOOLBAR_MARKER_CLASS)) {
-
-                                node.placeholder = ''; // Remove placeholder
-                                initializeToolbarForTextarea(node);
-                            }
+                        if (node.matches(ANY_TARGET_TEXTAREA_QUERY) && !node.classList.contains(TOOLBAR_MARKER_CLASS)) {
+                            node.placeholder = ''; // Remove placeholder
+                            initializeToolbarForTextarea(node);
                         } else if (node.querySelectorAll) {
                             // Check if the added node contains relevant textareas
-                            const textareas = node.querySelectorAll(
-                                'textarea[name="comment[body]"]:not(.cc-toolbar-added), ' +
-                                'textarea[id^="pull_request_review_body_"]:not(.cc-toolbar-added), ' +
-                                'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)'
-                            );
+                            const textareas = node.querySelectorAll(UNPROCESSED_TEXTAREA_QUERY);
                             textareas.forEach(textarea => {
-
+                                textarea.placeholder = 'Add your comment here...'; // Remove placeholder
                                 // Find and remove the placeholder element if it exists
                                 const commentBoxContainer = textarea.closest('.CommentBox-container');
                                 if (commentBoxContainer) {
@@ -553,7 +557,12 @@ const observer = new MutationObserver((mutationsList) => {
                                         placeholderElement.remove();
                                     }
                                 }
-                                textarea.placeholder = 'Add your comment here...'; // Remove placeholder
+
+                                // Ensure textarea has an ID (copied from processCommentAreas)
+                                if (!textarea.id) {
+                                    textarea.id = `cc-textarea-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+                                }
+
                                 initializeToolbarForTextarea(textarea);
                             });
                         }
