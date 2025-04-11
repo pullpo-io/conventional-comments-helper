@@ -71,7 +71,6 @@ function createBadgeMarkdown(type, decoration) {
 
 const TOOLBAR_ID_PREFIX = 'conventional-comments-toolbar-'; // Use prefix for uniqueness
 const TOOLBAR_MARKER_CLASS = 'cc-toolbar-added';
-const SETTINGS_MARKER_CLASS = 'cc-settings-injected'; // Marker for GitHub toolbars we've added settings to
 const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-'; // Prefix for settings button IDs
 const SETTINGS_DROPDOWN_ID_PREFIX = 'cc-settings-dropdown-'; // Prefix for settings dropdown IDs
 let toolbarCounter = 0; // Ensure unique IDs if multiple textareas load simultaneously
@@ -217,11 +216,6 @@ function createSettingsDropdown(id, initialState) {
     toggle.checked = initialState;
     toggle.classList.add('cc-settings-toggle');
 
-    toggle.addEventListener('change', (event) => {
-        setPrettifyState(event.target.checked);
-        // Optional: Add visual feedback or trigger other actions if needed
-    });
-
     label.appendChild(toggle);
     // Simple visual indicator for the switch (can be enhanced with CSS)
     const switchSpan = document.createElement('span');
@@ -233,15 +227,15 @@ function createSettingsDropdown(id, initialState) {
 }
 
 // Function to create the settings button
-function createSettingsButton(textarea, toolbarId) {
+function createSettingsButton() {
     const button = document.createElement('button');
     button.id = `${SETTINGS_BUTTON_ID_PREFIX}${settingsCounter}`;
     button.type = 'button';
     button.classList.add('cc-settings-button', 'tooltipped', 'tooltipped-n'); // Use GitHub tooltip classes
     button.setAttribute('aria-label', 'Conventional Comments Settings');
     button.innerHTML = `
-   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" class="">
-<path d="M7.375 7.75C7.375 7.84946 7.33549 7.94484 7.26517 8.01517C7.19484 8.08549 7.09946 8.125 7 8.125C6.90054 8.125 6.80516 8.08549 6.73484 8.01517C6.66451 7.94484 6.625 7.84946 6.625 7.75C6.625 7.65055 6.66451 7.55516 6.73484 7.48484C6.80516 7.41451 6.90054 7.375 7 7.375C7.09946 7.375 7.19484 7.41451 7.26517 7.48484C7.33549 7.55516 7.375 7.65055 7.375 7.75ZM7.375 7.75H7M11.125 7.75C11.125 7.84946 11.0855 7.94484 11.0152 8.01517C10.9448 8.08549 10.8495 8.125 10.75 8.125C10.6505 8.125 10.5552 8.08549 10.4848 8.01517C10.4145 7.94484 10.375 7.84946 10.375 7.75C10.375 7.65055 10.4145 7.55516 10.4848 7.48484C10.5552 7.41451 10.6505 7.375 10.75 7.375C10.8495 7.375 10.9448 7.41451 11.0152 7.48484C11.0855 7.55516 11.125 7.65055 11.125 7.75ZM11.125 7.75H10.75M14.875 7.75C14.875 7.84946 14.8355 7.94484 14.7652 8.01517C14.6948 8.08549 14.5995 8.125 14.5 8.125C14.4005 8.125 14.3052 8.08549 14.2348 8.01517C14.1645 7.94484 14.125 7.84946 14.125 7.75C14.125 7.65055 14.1645 7.55516 14.2348 7.48484C14.3052 7.41451 14.4005 7.375 14.5 7.375C14.5995 7.375 14.6948 7.41451 14.7652 7.48484C14.8355 7.55516 14.875 7.65055 14.875 7.75ZM14.875 7.75H14.5M1 10.76C1 12.36 2.123 13.754 3.707 13.987C4.794 14.147 5.892 14.27 7 14.356V19L11.184 14.817C11.3912 14.6107 11.6697 14.4918 11.962 14.485C13.9136 14.437 15.8605 14.2707 17.792 13.987C19.377 13.754 20.5 12.361 20.5 10.759V4.741C20.5 3.139 19.377 1.746 17.793 1.513C15.461 1.17072 13.107 0.99926 10.75 1C8.358 1 6.006 1.175 3.707 1.513C2.123 1.746 1 3.14 1 4.741V10.759V10.76Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> 
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 22">
+    <path d="M7.375 7.75C7.375 7.84946 7.33549 7.94484 7.26517 8.01517C7.19484 8.08549 7.09946 8.125 7 8.125C6.90054 8.125 6.80516 8.08549 6.73484 8.01517C6.66451 7.94484 6.625 7.84946 6.625 7.75C6.625 7.65055 6.66451 7.55516 6.73484 7.48484C6.80516 7.41451 6.90054 7.375 7 7.375C7.09946 7.375 7.19484 7.41451 7.26517 7.48484C7.33549 7.55516 7.375 7.65055 7.375 7.75ZM7.375 7.75H7M11.125 7.75C11.125 7.84946 11.0855 7.94484 11.0152 8.01517C10.9448 8.08549 10.8495 8.125 10.75 8.125C10.6505 8.125 10.5552 8.08549 10.4848 8.01517C10.4145 7.94484 10.375 7.84946 10.375 7.75C10.375 7.65055 10.4145 7.55516 10.4848 7.48484C10.5552 7.41451 10.6505 7.375 10.75 7.375C10.8495 7.375 10.9448 7.41451 11.0152 7.48484C11.0855 7.55516 11.125 7.65055 11.125 7.75ZM11.125 7.75H10.75M14.875 7.75C14.875 7.84946 14.8355 7.94484 14.7652 8.01517C14.6948 8.08549 14.5995 8.125 14.5 8.125C14.4005 8.125 14.3052 8.08549 14.2348 8.01517C14.1645 7.94484 14.125 7.84946 14.125 7.75C14.125 7.65055 14.1645 7.55516 14.2348 7.48484C14.3052 7.41451 14.4005 7.375 14.5 7.375C14.5995 7.375 14.6948 7.41451 14.7652 7.48484C14.8355 7.55516 14.875 7.65055 14.875 7.75ZM14.875 7.75H14.5M1 10.76C1 12.36 2.123 13.754 3.707 13.987C4.794 14.147 5.892 14.27 7 14.356V19L11.184 14.817C11.3912 14.6107 11.6697 14.4918 11.962 14.485C13.9136 14.437 15.8605 14.2707 17.792 13.987C19.377 13.754 20.5 12.361 20.5 10.759V4.741C20.5 3.139 19.377 1.746 17.793 1.513C15.461 1.17072 13.107 0.99926 10.75 1C8.358 1 6.006 1.175 3.707 1.513C2.123 1.746 1 3.14 1 4.741V10.759V10.76Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> 
 </svg>
 `
 
@@ -260,8 +254,9 @@ function createSettingsButton(textarea, toolbarId) {
         if (!currentlyActive) {
             // Position and show
             const btnRect = button.getBoundingClientRect();
+            const dwnRect = dropdown.getBoundingClientRect();
             dropdown.style.top = `${window.scrollY + btnRect.bottom + 5}px`; // Position below button
-            dropdown.style.left = `${window.scrollX + btnRect.left}px`; // Align left
+            dropdown.style.left = `${window.scrollX + btnRect.right - dwnRect.width}px`; // Align right
             dropdown.style.visibility = 'visible';
             dropdown.style.opacity = '1';
             dropdown.classList.add('active');
@@ -398,6 +393,36 @@ function renderToolbar(toolbar, textarea) {
             toolbar.appendChild(button);
         });
     }
+
+    // Create and Add Settings Button
+    const { button: settingsButton, dropdown: settingsDropdown } = createSettingsButton(textarea);
+
+    // Create a wrapper for the settings button for styling/positioning
+    const settingsButtonWrapper = document.createElement('div');
+    settingsButtonWrapper.classList.add('cc-toolbar-settings-item'); // Use a specific class
+    settingsButtonWrapper.appendChild(settingsButton);
+
+    // Append the settings button wrapper to the main toolbar
+    toolbar.appendChild(settingsButtonWrapper);
+
+    // Add listener to the toggle within the dropdown (which is appended to body)
+    const toggle = settingsDropdown.querySelector('.cc-settings-toggle');
+    toggle.addEventListener('change', (event) => {
+        setPrettifyState(event.target.checked);
+        // Need to update the current prefix if the state changes
+        // Get current selections from the toolbar dataset
+        const currentType = toolbar.dataset.selectedType;
+        const currentDecoration = toolbar.dataset.selectedDecoration;
+        // Only update if a type is actually selected
+        if (currentType) {
+             updateCommentPrefix(textarea, currentType, currentDecoration);
+        }
+    });
+
+    // Prevent the dropdown from disappearing on click
+    settingsDropdown.addEventListener('click', (event) => {
+        event.stopPropagation();
+    })
 }
 
 // --- Function to Initialize Toolbar for a Textarea ---
@@ -421,7 +446,6 @@ function initializeToolbarForTextarea(textarea) {
     toolbar.style.display = 'flex';
 
     // Initial rendering
-
     renderToolbar(toolbar, textarea);
 
     // Insert toolbar *before* the textarea
@@ -430,78 +454,16 @@ function initializeToolbarForTextarea(textarea) {
     textarea.classList.add(TOOLBAR_MARKER_CLASS); // Mark textarea
 }
 
-// --- Function to Inject Settings Button --- //
-function injectSettingsButton(textarea) {
-    // Find the associated GitHub Markdown toolbar
-    // This selector might need adjustment based on GitHub's current structure.
-    // Common patterns: `textarea.previousElementSibling`, specific classes like `.md-header`, traversing up to a common parent.
-    // Let's try finding a toolbar related to the textarea's ID or name, or a nearby toolbar element.
-    let githubToolbar = textarea.closest('form')?.querySelector('markdown-toolbar, .ActionBar'); // Look within the form for toolbar elements
-
-    // Fallback: Look for toolbar immediately preceding the textarea's container (common in PR reviews)
-    if (!githubToolbar) {
-        const parentWrapper = textarea.closest('.comment-form-textarea-wrapper'); // Adjust selector if needed
-        if (parentWrapper && parentWrapper.previousElementSibling?.matches('markdown-toolbar, .ActionBar')) {
-            githubToolbar = parentWrapper.previousElementSibling;
-        }
-    }
-    // Fallback 2: Look for toolbar inside a common ancestor like .timeline-comment-header
-    if (!githubToolbar) {
-        const header = textarea.closest('.js-comment-container, .timeline-comment') ?.querySelector('.timeline-comment-header .ActionBar');
-        if (header) {
-            githubToolbar = header;
-        }
-    }
-
-    if (githubToolbar && !githubToolbar.classList.contains(SETTINGS_MARKER_CLASS)) {
-
-
-        // Find the controls container within the toolbar (again, selector might need updates)
-        let controlsContainer = githubToolbar.querySelector('.ActionBar-item-container'); // Common in newer UIs
-        if (!controlsContainer) {
-            controlsContainer = githubToolbar.querySelector('.md-header-controls'); // Older pattern
-        }
-        if (!controlsContainer) {
-            controlsContainer = githubToolbar; // Default to toolbar itself if no specific container found
-        }
-
-        const { button, dropdown } = createSettingsButton(textarea);
-
-        // Wrap button in a container if needed for styling/layout within GitHub's toolbar
-        const buttonWrapper = document.createElement('div');
-        // Try to mimic GitHub's own button wrappers if possible
-        buttonWrapper.classList.add('ActionBar-item', 'cc-settings-item');
-        buttonWrapper.appendChild(button);
-
-        controlsContainer.appendChild(buttonWrapper); // Append the wrapped button
-        githubToolbar.classList.add(SETTINGS_MARKER_CLASS); // Mark toolbar as processed
-
-        // Add listener to the toggle - NOW ONLY SAVES STATE, DOES NOT HIDE/SHOW TOOLBAR
-        const toggle = dropdown.querySelector('.cc-settings-toggle');
-        const textareaId = textarea.id; // Capture textarea ID for the listener
-        toggle.addEventListener('change', (event) => {
-            setPrettifyState(event.target.checked); // Save state to localStorage
-
-            // NO LONGER MANIPULATES TOOLBAR DISPLAY HERE
-        });
-    } else if (!githubToolbar) {
-
-    }
-}
-
 // --- Main Execution & Mutation Observer ---
 
 // Find all comment textareas and process them
 function processCommentAreas() {
-
     // Enhanced selector to target known GitHub comment textareas
     const commentTextareas = document.querySelectorAll(
         'textarea[name="comment[body]"]:not(.cc-toolbar-added), ' + // Standard comments
         'textarea[id^="pull_request_review_body_"]:not(.cc-toolbar-added), ' + // PR review comments
         'textarea[id="commit-description-textarea"]:not(.cc-toolbar-added)' // Commit descriptions
     );
-
-    
 
     commentTextareas.forEach(textarea => {
         if (!textarea || textarea.classList.contains(TOOLBAR_MARKER_CLASS)) {
@@ -525,7 +487,6 @@ function processCommentAreas() {
             textarea.id = `cc-textarea-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
         }
 
-        injectSettingsButton(textarea); // Inject settings
         initializeToolbarForTextarea(textarea); // Initialize toolbar (visibility depends on prettify state)
     });
 }
@@ -601,7 +562,6 @@ const observer = new MutationObserver((mutationsList) => {
                             if (!node.classList.contains(TOOLBAR_MARKER_CLASS)) {
 
                                 node.placeholder = ''; // Remove placeholder
-                                injectSettingsButton(node);
                                 initializeToolbarForTextarea(node);
                             }
                         } else if (node.querySelectorAll) {
@@ -622,7 +582,6 @@ const observer = new MutationObserver((mutationsList) => {
                                     }
                                 }
                                 textarea.placeholder = 'Add your comment here...'; // Remove placeholder
-                                injectSettingsButton(textarea);
                                 initializeToolbarForTextarea(textarea);
                             });
                         }
