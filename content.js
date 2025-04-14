@@ -3,7 +3,6 @@
 const TOOLBAR_ID_PREFIX = 'conventional-comments-toolbar-'; // Use prefix for uniqueness
 const TOOLBAR_MARKER_CLASS = 'cc-toolbar-added';
 const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-'; // Prefix for settings button IDs
-const SETTINGS_DROPDOWN_ID_PREFIX = 'cc-settings-dropdown-'; // Prefix for settings dropdown IDs
 
 // --- Global Selector for Textareas ---
 
@@ -183,41 +182,18 @@ function updateCommentPrefix(toolbar, textarea) {
 
 // --- Settings UI --- //
 
-// Function to create the settings dropdown HTML
-function createSettingsDropdown(id, initialState) {
-    const dropdown = document.createElement('div');
-    dropdown.id = id;
-    dropdown.classList.add('cc-settings-dropdown');
-    // Start hidden, CSS will handle transition
-    dropdown.style.visibility = 'hidden';
-    dropdown.style.opacity = '0';
-
-    const label = document.createElement('label');
-    label.classList.add('cc-settings-toggle-label');
-    label.textContent = 'Prettify: ';
-
-    const toggle = document.createElement('input');
-    toggle.type = 'checkbox';
-    toggle.checked = initialState;
-    toggle.classList.add('cc-settings-toggle');
-
-    label.appendChild(toggle);
-
-    // Simple visual indicator for the switch (can be enhanced with CSS)
-    const switchSpan = document.createElement('span');
-    switchSpan.classList.add('cc-settings-toggle-switch');
-    label.appendChild(switchSpan);
-
-    dropdown.appendChild(label);
-    return dropdown;
-}
-
 // Function to create the settings button
-function createSettingsButton(prettifyEnabled) {
+function createSettingsButton(toolbar, textarea) {
     const button = document.createElement('button');
     button.id = `${SETTINGS_BUTTON_ID_PREFIX}${settingsCounter}`;
+    button.title = 'Toggle prettify';
     button.type = 'button';
+
     button.classList.add('cc-settings-button', 'tooltipped', 'tooltipped-n'); // Use GitHub tooltip classes
+    if (toolbar.dataset.prettified === 'true') {
+        button.classList.add('cc-settings-button-active');
+    }
+
     button.setAttribute('aria-label', 'Conventional Comments Settings');
     button.innerHTML = `
 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 22">
@@ -225,44 +201,28 @@ function createSettingsButton(prettifyEnabled) {
 </svg>
 `
 
-    const dropdownId = `${SETTINGS_DROPDOWN_ID_PREFIX}${settingsCounter}`;
-    const dropdown = createSettingsDropdown(dropdownId, prettifyEnabled);
-
-    // Append dropdown to the body initially to handle potential overflow issues
-    // It will be positioned relative to the button via CSS
-    document.body.appendChild(dropdown);
-
     button.addEventListener('click', (event) => {
         event.stopPropagation(); // Prevent triggering outside click listener immediately
-        const currentlyActive = dropdown.classList.contains('active');
-        closeAllSettingsDropdowns(); // Close others
-        if (!currentlyActive) {
-            // Position and show
-            const btnRect = button.getBoundingClientRect();
-            const dwnRect = dropdown.getBoundingClientRect();
-            dropdown.style.top = `${window.scrollY + btnRect.bottom + 5}px`; // Position below button
-            dropdown.style.left = `${window.scrollX + btnRect.right - dwnRect.width}px`; // Align right
-            dropdown.style.visibility = 'visible';
-            dropdown.style.opacity = '1';
-            dropdown.classList.add('active');
+        const currentState = toolbar.dataset.prettified === 'true';
+        const newState = !currentState;
+        const newStateString = newState.toString(); // "true" or "false"
+
+        // Update state in dataset and localStorage
+        toolbar.dataset.prettified = newStateString;
+        setPreferredPrettifyState(newStateString);
+
+        // Toggle visual active state class on the button
+        button.classList.toggle('cc-settings-button-active', newState);
+
+        // Update comment prefix if a type is selected
+        if (toolbar.dataset.selectedType) {
+            updateCommentPrefix(toolbar, textarea);
         }
     });
 
     settingsCounter++;
-    return { button, dropdown }; // Return both for management
+    return button;
 }
-
-// Function to close all open settings dropdowns
-function closeAllSettingsDropdowns() {
-    document.querySelectorAll('.cc-settings-dropdown.active').forEach(dd => {
-        dd.style.visibility = 'hidden';
-        dd.style.opacity = '0';
-        dd.classList.remove('active');
-    });
-}
-
-// Add listener to close dropdowns when clicking outside
-document.addEventListener('click', closeAllSettingsDropdowns);
 
 // --- Core Function: Render Toolbar UI based on State ---
 function renderToolbar(toolbar, textarea) {
@@ -378,31 +338,15 @@ function renderToolbar(toolbar, textarea) {
     }
 
     // Create and Add Settings Button
-    const { button: settingsButton, dropdown: settingsDropdown } = createSettingsButton(prettifyEnabled);
+    const settingsButton = createSettingsButton(toolbar, textarea);
 
     // Create a wrapper for the settings button for styling/positioning
     const settingsButtonWrapper = document.createElement('div');
-    settingsButtonWrapper.classList.add('cc-toolbar-settings-item'); // Use a specific class
+    settingsButtonWrapper.classList.add('cc-toolbar-settings-item');
     settingsButtonWrapper.appendChild(settingsButton);
 
     // Append the settings button wrapper to the main toolbar
     toolbar.appendChild(settingsButtonWrapper);
-
-    // Add listener to the toggle within the dropdown (which is appended to body)
-    const toggle = settingsDropdown.querySelector('.cc-settings-toggle');
-    toggle.addEventListener('change', (event) => {
-        toolbar.dataset.prettified = event.target.checked.toString();
-        setPreferredPrettifyState(toolbar.dataset.prettified);
-        // Only update if a type is actually selected
-        if (toolbar.dataset.selectedType) {
-            updateCommentPrefix(toolbar, textarea);
-        }
-    });
-
-    // Prevent the dropdown from disappearing on click
-    settingsDropdown.addEventListener('click', (event) => {
-        event.stopPropagation();
-    })
 }
 
 // --- Function to Initialize Toolbar for a Textarea ---
