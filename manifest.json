@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Conventional Comments Helper (GitHub)",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Helps format code review comments on GitHub using the Conventional Comments standard.",
     "permissions": [
       "storage"
