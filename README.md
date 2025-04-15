@@ -6,6 +6,10 @@
 
 > A Chrome extension that enhances code reviews by implementing the Conventional Comments standard directly in GitHub's interface.
 
+<p align="center">
+  <img src="media/demo.gif" alt="Conventional Comments Helper Demo">
+</p>
+
 ## 🎯 The Problem
 
 Code reviews are crucial for maintaining code quality, but they often suffer from:
@@ -44,7 +48,7 @@ Conventional Comments Helper brings the power of [Conventional Comments](https:/
 
 ## 📥 Installation
 
-1. Visit the [Chrome Web Store](your-chrome-store-link)
+1. Visit the [Chrome Web Store](https://chromewebstore.google.com/detail/gelgbjildgbbfgfgpibgcnolcipinmlp?utm_source=github_readme)
 2. Click "Add to Chrome"
 3. The extension will automatically activate on GitHub.com
 
