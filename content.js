@@ -9,9 +9,9 @@ const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-'; // Prefix for settings 
 // Selectors for GitHub textareas where the toolbar should appear
 const TARGET_TEXTAREA_SELECTORS = [
     'textarea[name="comment[body]"]',                     // Standard issue/PR comments
-    'textarea[id^="pull_request_review_body_"]',         // Editing existing PR review line comments
-    'textarea[id="commit-description-textarea"]',        // Commit descriptions
-    'textarea[name="pull_request_review[body]"]' // Review Changes modal/popup form
+    'textarea[name="issue_comment[body]"]',               // Editing existing PR issue comments
+    'textarea[name="pull_request_review_comment[body]"]', // Editing existing PR review line comments
+    'textarea[name="pull_request_review[body]"]'          // Review Changes modal/popup form
 ];
 
 // Combine selectors with :not(.cc-toolbar-added) for querying unprocessed textareas
@@ -25,19 +25,19 @@ const ANY_TARGET_TEXTAREA_QUERY = TARGET_TEXTAREA_SELECTORS.join(', ');
 // --- Components of a Conventional Comment ---
 
 const LABELS = [
-    { label: 'praise', desc: 'Highlight something positive.', color: '#28A745' }, // Green - Standard for success/positive feedback
+    { label: 'praise', desc: 'Highlight something positive.', color: '#28A745' },                   // Green - Standard for success/positive feedback
     { label: 'nitpick', desc: 'Minor, non-blocking issues (style, naming...).', color: '#F59E0B' }, // Amber/Dark Yellow - Suggests caution, minor warning
-    { label: 'suggestion', desc: 'Suggest specific improvements.', color: '#3B82F6' }, // Blue - Often used for informational/suggestions
-    { label: 'issue', desc: 'Point out a blocking problem.', color: '#EF4444' }, // Red - Standard for errors/critical problems
-    { label: 'question', desc: 'Ask for clarification.', color: '#8B5CF6' }, // Violet/Purple - Distinct color often used for queries/info
-    { label: 'thought', desc: 'Share a reflection or idea.', color: '#6B7280' }, // Cool Gray - Neutral, less prominent, for reflections
-    { label: 'chore', desc: 'Request a minor, non-code task.', color: '#F97316' }, // Orange - Action-oriented but distinct from critical red/amber
+    { label: 'suggestion', desc: 'Suggest specific improvements.', color: '#3B82F6' },              // Blue - Often used for informational/suggestions
+    { label: 'issue', desc: 'Point out a blocking problem.', color: '#EF4444' },                    // Red - Standard for errors/critical problems
+    { label: 'question', desc: 'Ask for clarification.', color: '#8B5CF6' },                        // Violet/Purple - Distinct color often used for queries/info
+    { label: 'thought', desc: 'Share a reflection or idea.', color: '#6B7280' },                    // Cool Gray - Neutral, less prominent, for reflections
+    { label: 'chore', desc: 'Request a minor, non-code task.', color: '#F97316' },                  // Orange - Action-oriented but distinct from critical red/amber
 ];
 
 const DECORATIONS = [
     { label: 'non-blocking', desc: 'Optional change, doesn\'t block merge.', color: '#9CA3AF' }, // Light/Medium Gray - Indicates reduced severity/optionality
-    { label: 'blocking', desc: 'Must be addressed before merge.', color: '#374151' }, // Dark Gray/Charcoal - Serious, indicates high importance/blocker
-    { label: 'if-minor', desc: 'Address if the effort is small.', color: '#14B8A6' } // Teal - Represents conditionality, distinct suggestion tone
+    { label: 'blocking', desc: 'Must be addressed before merge.', color: '#374151' },            // Dark Gray/Charcoal - Serious, indicates high importance/blocker
+    { label: 'if-minor', desc: 'Address if the effort is small.', color: '#14B8A6' }             // Teal - Represents conditionality, distinct suggestion tone
 ];
 
 // --- Selector for formatted Conventional Comments ---
