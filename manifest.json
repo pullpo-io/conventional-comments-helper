@@ -1,5 +1,5 @@
 {
-    "manifest_version": 3,
+    "manifest_version": 4,
     "name": "Conventional Comments (GitHub) - by Pullpo",
     "version": "0.2.1",
     "description": "Helps format code review comments on GitHub using the Conventional Comments standard.",
