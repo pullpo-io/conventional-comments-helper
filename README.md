@@ -1,13 +1,13 @@
-# Conventional Comments Helper
+# Conventional Comments - by Pullpo
 
 <p align="center">
-  <img src="icons/icon128.png" alt="Conventional Comments Helper Logo" width="128" height="128">
+  <img src="icons/icon128.png" alt="Conventional Comments Logo" width="128" height="128">
 </p>
 
 > A Chrome extension that enhances code reviews by implementing the Conventional Comments standard directly in GitHub's interface.
 
 <p align="center">
-  <img src="media/demo.gif" alt="Conventional Comments Helper Demo">
+  <img src="media/demo.gif" alt="Conventional Comments Demo">
 </p>
 
 ## 🎯 The Problem
@@ -20,7 +20,7 @@ Code reviews are crucial for maintaining code quality, but they often suffer fro
 
 ## 💡 The Solution
 
-Conventional Comments Helper brings the power of [Conventional Comments](https://conventionalcomments.org/) directly into your GitHub workflow. It adds a sleek, intuitive toolbar to every comment box in GitHub, making it easy to:
+*Conventional Comments - by Pullpo* brings the power of [Conventional Comments](https://conventionalcomments.org/) directly into your GitHub workflow. It adds a sleek, intuitive toolbar to every comment box in GitHub, making it easy to:
 
 - Add standardized labels to your comments (praise, suggestion, issue, etc.)
 - Include decorators for additional context (non-blocking, blocking, if-minor)
