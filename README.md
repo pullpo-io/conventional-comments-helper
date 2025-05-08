@@ -4,7 +4,7 @@
   <img src="icons/icon128.png" alt="Conventional Comments Logo" width="128" height="128">
 </p>
 
-> A Chrome extension that enhances code reviews by implementing the Conventional Comments standard directly in GitHub's interface.
+> A browser extension that enhances code reviews by implementing the Conventional Comments standard directly in GitHub's interface.
 
 <p align="center">
   <img src="media/demo.gif" alt="Conventional Comments Demo">
@@ -48,8 +48,14 @@ Code reviews are crucial for maintaining code quality, but they often suffer fro
 
 ## 📥 Installation
 
+### Chrome
 1. Visit the [Chrome Web Store](https://chromewebstore.google.com/detail/gelgbjildgbbfgfgpibgcnolcipinmlp?utm_source=github_readme)
 2. Click "Add to Chrome"
+3. The extension will automatically activate on GitHub.com
+
+### Firefox
+1. Visit the [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/conventional-comments-pullpo/)
+2. Click "Add to Firefox"
 3. The extension will automatically activate on GitHub.com
 
 ## 🚀 Usage
@@ -71,6 +77,36 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+## 🛠️ Building from Source
+
+The extension can be built for both Chrome and Firefox using our build system:
+
+1. Clone the repository and install dependencies:
+   ```bash
+   git clone https://github.com/pullpo/conventional-comments-helper.git
+   cd conventional-comments-helper
+   npm install
+   ```
+
+2. Build for your target browser:
+   - For Chrome:
+     ```bash
+     npm run build:chrome
+     ```
+   - For Firefox:
+     ```bash
+     npm run build:firefox
+     ```
+   - For both browsers:
+     ```bash
+     npm run build
+     ```
+
+3. Load the extension:
+   - Chrome: Load the `build/chrome` directory as an unpacked extension
+   - Firefox: Load the `build/firefox` directory as a temporary add-on
+
 
 ## 📄 License
 
