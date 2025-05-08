@@ -19,6 +19,7 @@
       "matches": [
         "*://github.com/*"
       ],
+      "exclude_matches": [ "*://github.com/login*" ],
       "js": ["content.js"],
       "css": ["style.css"],
       "run_at": "document_idle"
