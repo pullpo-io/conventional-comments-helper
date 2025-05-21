@@ -7,7 +7,8 @@
     "storage"
   ],
   "host_permissions": [
-    "*://github.com/*"
+    "*://github.com/*",
+    "*://gitlab.com/*"
   ],
   "icons": {
     "16": "icons/icon16.png",
@@ -17,7 +18,8 @@
   "content_scripts": [
     {
       "matches": [
-        "*://github.com/*"
+        "*://github.com/*",
+        "*://gitlab.com/*"
       ],
       "exclude_matches": [ "*://github.com/login*" ],
       "js": ["content.js"],
