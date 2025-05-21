@@ -7,13 +7,13 @@ const SETTINGS_BUTTON_ID_PREFIX = 'cc-settings-button-'; // Prefix for settings 
 // --- Global Selector for Textareas ---
 
 // Selectors for GitHub textareas where the toolbar should appear
-// GitHub selectors
 const TARGET_TEXTAREA_SELECTORS = [
+    // GitHub selectors
     'textarea[name="comment[body]"]',                     // Standard issue/PR comments
     'textarea[name="issue_comment[body]"]',               // Editing existing PR issue comments
     'textarea[name="pull_request_review_comment[body]"]', // Editing existing PR review line comments
     'textarea[name="pull_request_review[body]"]',          // Review Changes modal/popup form
-// GitLab selectors
+    // GitLab selectors
     'textarea[name="note[note]"]',                        // MR discussions (incl. line comments)
     'textarea[name="work-item-add-or-edit-comment"]'      // Issue discussions (incl. new descriptions & comments)
 ];
