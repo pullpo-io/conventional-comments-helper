@@ -4,7 +4,7 @@
   <img src="icons/icon128.png" alt="Conventional Comments Logo" width="128" height="128">
 </p>
 
-> A browser extension that enhances code reviews by implementing the Conventional Comments standard directly in GitHub's interface.
+> A browser extension that enhances code reviews by implementing the Conventional Comments standard directly in GitHub and GitLab interfaces.
 
 <p align="center">
   <img src="media/demo.gif" alt="Conventional Comments Demo">
@@ -20,7 +20,7 @@ Code reviews are crucial for maintaining code quality, but they often suffer fro
 
 ## 💡 The Solution
 
-*Conventional Comments - by Pullpo* brings the power of [Conventional Comments](https://conventionalcomments.org/) directly into your GitHub workflow. It adds a sleek, intuitive toolbar to every comment box in GitHub, making it easy to:
+*Conventional Comments - by Pullpo* brings the power of [Conventional Comments](https://conventionalcomments.org/) directly into your GitHub and GitLab workflow. It adds a sleek, intuitive toolbar to every comment box, making it easy to:
 
 - Add standardized labels to your comments (praise, suggestion, issue, etc.)
 - Include decorators for additional context (non-blocking, blocking, if-minor)
@@ -29,7 +29,7 @@ Code reviews are crucial for maintaining code quality, but they often suffer fro
 
 ## ✨ Features
 
-- 🎨 **Intuitive Toolbar**: Seamlessly integrated into GitHub's interface
+- 🎨 **Intuitive Toolbar**: Seamlessly integrated into GitHub and GitLab interfaces
 - 🏷️ **Standard Labels**: 
   - `praise`: Highlight something positive
   - `nitpick`: Minor, non-blocking issues
@@ -44,23 +44,23 @@ Code reviews are crucial for maintaining code quality, but they often suffer fro
   - `(if-minor)`: Address if the effort is small
 - 🔄 **Toggle Functionality**: Easily remove labels or decorations
 - 🎨 **Badge Style Option**: Switch between text and visual badge formats
-- 🌓 **Dark Mode Support**: Seamlessly works with GitHub's themes
+- 🌓 **Dark Mode Support**: Seamlessly works with both GitHub and GitLab themes
 
 ## 📥 Installation
 
 ### Chrome
 1. Visit the [Chrome Web Store](https://chromewebstore.google.com/detail/gelgbjildgbbfgfgpibgcnolcipinmlp?utm_source=github_readme)
 2. Click "Add to Chrome"
-3. The extension will automatically activate on GitHub.com
+3. The extension will automatically activate on GitHub.com and GitLab.com
 
 ### Firefox
 1. Visit the [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/conventional-comments-pullpo/)
 2. Click "Add to Firefox"
-3. The extension will automatically activate on GitHub.com
+3. The extension will automatically activate on GitHub.com and GitLab.com
 
 ## 🚀 Usage
 
-1. Navigate to any GitHub pull request or issue
+1. Navigate to any pull request or merge request on GitHub or GitLab
 2. Click on the comment box
 3. Use the toolbar that appears above the comment box:
    - Select a label type (e.g., "suggestion", "issue")
